@@ -20,10 +20,10 @@ A lightweight, zero-dependency client-side JavaScript Ad Wrapper SDK with multi-
 
 ## 📦 Installation
 
-Include the minified SDK in your HTML:
+Include the minified SDK in your HTML via jsDelivr CDN:
 
 ```html
-<script src="dist/ad-wrapper.min.js"></script>
+<script src="https://cdn.jsdelivr.net/gh/Kinn156/ad-wrapper-sdk@v1.0.0/dist/ad-wrapper.min.js"></script>
 ```
 
 ## 🔧 Configuration
