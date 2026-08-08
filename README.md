@@ -1,0 +1,290 @@
+# Universal Ad Wrapper SDK - Production Ready
+
+A lightweight, zero-dependency client-side JavaScript Ad Wrapper SDK with multi-provider support, intelligent environment detection, obfuscated platform keys, and robust failure fallback handling.
+
+## 🚀 Features
+
+### Core Functionality
+- **Multi-Provider Support**: Google AdSense, Unity Ads, AppLovin, A-Ads, and custom HTML tags
+- **10% Platform Takeover**: Probabilistic routing for platform monetization
+- **Environment Detection**: Automatic detection of mobile, tablet, and desktop environments
+- **Fallback Mechanism**: Intelligent retry system with configurable fallback providers
+- **Obfuscated Keys**: Base64-encoded platform master keys for security
+
+### Security & Reliability
+- **Key Obfuscation**: Platform keys stored as Base64 to prevent plain-text searching
+- **Environment-Aware Routing**: Unity Ads for mobile/tablet, A-Ads for desktop
+- **Failure Handling**: Comprehensive error handling with automatic fallback
+- **Retry Logic**: Configurable maximum retry attempts (default: 2)
+- **Clean DOM Management**: Prevents conflicts between different ad providers
+
+## 📦 Installation
+
+Include the minified SDK in your HTML:
+
+```html
+<script src="dist/ad-wrapper.min.js"></script>
+```
+
+## 🔧 Configuration
+
+### Basic Setup
+
+```javascript
+AdWrapper.init({
+  containerId: "ad-slot-1",
+  developerConfig: {
+    provider: "google", // or "unity", "applovin", "a-ads", "custom_tag"
+    keys: {
+      googleAdSlot: "/12345/developer_banner"
+    }
+  }
+});
+```
+
+### Advanced Configuration with Fallback
+
+```javascript
+AdWrapper.init({
+  containerId: "ad-slot-1",
+  developerConfig: {
+    provider: "google",
+    keys: {
+      googleAdSlot: "/12345/developer_banner"
+    },
+    fallbackProvider: "custom_tag",
+    fallbackKeys: {
+      customHtml: '<div>Fallback Ad</div>'
+    }
+  }
+});
+```
+
+### Loading Ads
+
+```javascript
+// Load a single ad
+AdWrapper.loadAd();
+```
+
+## 🎯 Platform Takeover Configuration
+
+The SDK automatically routes 10% of ad requests to platform ads using obfuscated keys:
+
+- **Mobile/Tablet**: Unity Ads (Game ID: `800110972`)
+- **Desktop**: A-Ads (Zone ID: `2450233`)
+
+Platform keys are Base64-encoded in the source code:
+- Unity ID: `ODAwMTEwOTcy` → `800110972`
+- A-Ads Zone: `MjQ1MDIzMw==` → `2450233`
+
+## 📱 Environment Detection
+
+The SDK automatically detects the user's environment:
+
+- **Mobile**: iPhones, Android phones, etc.
+- **Tablet**: iPads, Android tablets
+- **Desktop**: Desktop browsers
+
+Platform provider selection:
+- Mobile/Tablet → Unity Ads
+- Desktop → A-Ads
+
+## 🔄 Fallback Mechanism
+
+The SDK implements a robust fallback system:
+
+1. **Platform Ad Failure**: Falls back to developer configuration
+2. **Developer Ad Failure**: Uses configured fallback provider
+3. **No Fallback Config**: Falls back to platform ads
+4. **Max Attempts Reached**: Shows fallback placeholder
+
+### Configuring Fallback
+
+```javascript
+developerConfig: {
+  provider: "google",
+  keys: { googleAdSlot: "/12345/developer_banner" },
+  fallbackProvider: "unity", // or "a-ads", "custom_tag"
+  fallbackKeys: {
+    unityGameId: "FALLBACK_UNITY_ID"
+  }
+}
+```
+
+## 🛠️ API Reference
+
+### Configuration Methods
+
+- `AdWrapper.init(config)` - Initialize the SDK
+- `AdWrapper.loadAd()` - Load an ad request
+
+### Environment Methods
+
+- `AdWrapper.getEnvironment()` - Get detected environment (mobile/tablet/desktop)
+
+### Configuration Methods
+
+- `AdWrapper.getTakeoverRate()` - Get current takeover rate (default: 0.10)
+- `AdWrapper.setTakeoverRate(rate)` - Set takeover rate (0.0 to 1.0)
+- `AdWrapper.isFallbackEnabled()` - Check if fallback is enabled
+- `AdWrapper.setFallbackEnabled(enabled)` - Enable/disable fallback
+- `AdWrapper.getMaxRetryAttempts()` - Get max retry attempts
+- `AdWrapper.setMaxRetryAttempts(attempts)` - Set max retry attempts (0-5)
+
+## 🧪 Testing
+
+### Automated Tests
+
+Run the comprehensive test suite:
+
+```bash
+node test-environment-fallback.js
+```
+
+This tests:
+- Base64 decoding verification
+- Environment detection accuracy
+- Platform provider selection
+- Fallback logic scenarios
+- Key obfuscation
+- Takeover rate statistics
+
+### Manual Testing
+
+Open `index.html` in a browser to access the interactive test harness:
+
+- **Load Single Ad**: Test individual ad requests
+- **Run 100 Tests**: Automated batch testing with statistics
+- **Test Fallback**: Simulate failure scenarios
+- **Environment Display**: Shows detected environment
+- **Live Statistics**: Real-time takeover/fallback tracking
+
+## 📊 Supported Providers
+
+### Google AdSense
+```javascript
+provider: "google",
+keys: {
+  googleAdSlot: "/12345/developer_banner"
+}
+```
+
+### Unity Ads
+```javascript
+provider: "unity",
+keys: {
+  unityGameId: "YOUR_UNITY_GAME_ID"
+}
+```
+
+### AppLovin
+```javascript
+provider: "applovin",
+keys: {
+  applovinZoneId: "YOUR_APPLOVIN_ZONE"
+}
+```
+
+### A-Ads
+```javascript
+provider: "a-ads",
+keys: {
+  aAdsZoneId: "YOUR_AADS_ZONE"
+}
+```
+
+### Custom HTML
+```javascript
+provider: "custom_tag",
+keys: {
+  customHtml: "<div>Your custom ad HTML</div>"
+}
+```
+
+## 🔐 Security Features
+
+1. **Obfuscated Keys**: Platform master keys are Base64-encoded
+2. **Key Masking**: Keys are partially obfuscated in console logs
+3. **No External Dependencies**: Zero-dependency reduces attack surface
+4. **DOM Isolation**: Ads loaded in isolated containers
+
+## 📈 Statistics & Monitoring
+
+The SDK provides detailed console logging:
+
+- `[AdWrapper] PLATFORM TAKEOVER` - Platform ad routing
+- `[AdWrapper] DEVELOPER SHARE` - Developer ad routing
+- `[AdWrapper] Fallback attempt` - Fallback activation
+- `[AdWrapper] Environment detected` - Environment detection
+
+## 🚀 Building
+
+Build the production bundle:
+
+```bash
+npm install
+npm run build
+```
+
+Development build with source maps:
+
+```bash
+npm run dev
+```
+
+## 📝 File Structure
+
+```
+ADS AGGREGATOR/
+├── src/
+│   └── ad-wrapper.js          # Source code
+├── dist/
+│   └── ad-wrapper.min.js      # Production bundle
+├── index.html                 # Test harness
+├── test-environment-fallback.js  # Automated tests
+├── test-routing.js            # Routing logic tests
+├── package.json               # NPM configuration
+└── README.md                  # Documentation
+```
+
+## ⚙️ Configuration Options
+
+### Takeover Rate
+Default: 10% (0.10)
+```javascript
+AdWrapper.setTakeoverRate(0.15); // Set to 15%
+```
+
+### Fallback Enabled
+Default: true
+```javascript
+AdWrapper.setFallbackEnabled(false); // Disable fallback
+```
+
+### Max Retry Attempts
+Default: 2
+```javascript
+AdWrapper.setMaxRetryAttempts(3); // Set to 3 attempts
+```
+
+## 🌐 Browser Compatibility
+
+- Chrome/Edge: ✅ Full support
+- Firefox: ✅ Full support
+- Safari: ✅ Full support
+- Mobile browsers: ✅ Full support
+
+## 📄 License
+
+MIT License - Feel free to use in your projects
+
+## 🤝 Support
+
+For issues or questions, please refer to the test harness and automated tests for usage examples.
+
+---
+
+**Version**: 1.0.0  
+**Status**: Production Ready ✅  
+**Last Updated**: 2026-08-02

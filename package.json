@@ -1,0 +1,23 @@
+{
+  "name": "ad-wrapper-sdk",
+  "version": "1.0.0",
+  "description": "Universal Ad Wrapper SDK with multi-provider support and 10% Unity takeover",
+  "main": "dist/ad-wrapper.min.js",
+  "scripts": {
+    "build": "terser src/ad-wrapper.js -c -m -o dist/ad-wrapper.min.js",
+    "dev": "terser src/ad-wrapper.js -c -m -o dist/ad-wrapper.min.js --source-map"
+  },
+  "keywords": [
+    "ads",
+    "wrapper",
+    "sdk",
+    "unity",
+    "google",
+    "applovin"
+  ],
+  "author": "",
+  "license": "MIT",
+  "devDependencies": {
+    "terser": "^5.19.0"
+  }
+}
