@@ -1,0 +1,13 @@
+# Dependencies
+node_modules/
+
+# Test files
+test-routing.js
+test-environment-fallback.js
+
+# Demo files
+index.html
+
+# Environment files
+.env
+.env.local
