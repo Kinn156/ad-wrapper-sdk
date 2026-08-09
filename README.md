@@ -1,4 +1,4 @@
-# Universal Ad Wrapper SDK v2.2.0 - Production-Grade Developer SDK
+# Universal Ad Wrapper SDK v2.2.1 - Hardened Developer SDK
 
 A lightweight, zero-dependency client-side JavaScript Ad Wrapper SDK with multi-provider support, intelligent environment detection, obfuscated platform keys, robust failure fallback handling, and production-grade security features.
 
@@ -32,10 +32,10 @@ A lightweight, zero-dependency client-side JavaScript Ad Wrapper SDK with multi-
 Include the minified SDK in your HTML via jsDelivr CDN:
 
 ```html
-<script src="https://cdn.jsdelivr.net/gh/Kinn156/ad-wrapper-sdk@v2.2.0/dist/ad-wrapper.min.js"></script>
+<script src="https://cdn.jsdelivr.net/gh/Kinn156/ad-wrapper-sdk@v2.2.1/dist/ad-wrapper.min.js"></script>
 ```
 
-### ES5 Constructor Pattern (v2.2.0)
+### ES5 Constructor Pattern (v2.2.1)
 
 For multiple ad slots, create isolated instances:
 
@@ -349,9 +349,16 @@ For issues or questions, please refer to the test harness and automated tests fo
 
 ---
 
-**Version**: 2.2.0  
-**Status**: Production-Grade Developer SDK ✅  
+**Version**: 2.2.1  
+**Status**: Hardened Developer SDK ✅  
 **Last Updated**: 2026-08-09  
+
+## v2.2.1 Changes
+- **Fallback routing fix**: Intelligent hierarchy (Platform → Developer → FallbackProvider → Platform)
+- **Fallback placeholder**: Renders styled placeholder when max retries reached
+- **Timer cleanup**: Proper timeout cleanup on success and failure to prevent memory leaks
+- **Promise-based script loader**: Centralized loadScript() method with state tracking
+- **E2E test fixes**: Fixed synchronous provider assertion and added uncaught error handlers
 
 ## v2.2.0 Changes
 - **RequestSession objects**: Isolated session tracking with attempt history and completion state
