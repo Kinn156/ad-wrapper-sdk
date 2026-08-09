@@ -1,4 +1,4 @@
-# Universal Ad Wrapper SDK v2.1.0 - Enterprise Edition
+# Universal Ad Wrapper SDK v2.2.0 - Enterprise Edition
 
 A lightweight, zero-dependency client-side JavaScript Ad Wrapper SDK with multi-provider support, intelligent environment detection, obfuscated platform keys, robust failure fallback handling, and enterprise-grade security features.
 
@@ -22,18 +22,19 @@ A lightweight, zero-dependency client-side JavaScript Ad Wrapper SDK with multi-
 - **Script Deduplication**: State-based script loading with callback queuing
 - **Request Timeouts**: Configurable timeout safeguards for external requests
 - **Consent Metadata Storage & Forwarding**: GDPR and US Privacy consent string injection with HTML escaping
-- **Request Isolation**: Stale-callback protection prevents race conditions
+- **Request Isolation**: Session-based stale-callback protection prevents race conditions
 - **Unique Container IDs**: Dynamic ID generation prevents multi-slot conflicts
+- **Session Tracking**: RequestSession objects track attempt history and completion state
 
 ## 📦 Installation
 
 Include the minified SDK in your HTML via jsDelivr CDN:
 
 ```html
-<script src="https://cdn.jsdelivr.net/gh/Kinn156/ad-wrapper-sdk@v2.1.0/dist/ad-wrapper.min.js"></script>
+<script src="https://cdn.jsdelivr.net/gh/Kinn156/ad-wrapper-sdk@v2.2.0/dist/ad-wrapper.min.js"></script>
 ```
 
-### ES5 Constructor Pattern (v2.1.0)
+### ES5 Constructor Pattern (v2.2.0)
 
 For multiple ad slots, create isolated instances:
 
@@ -347,9 +348,15 @@ For issues or questions, please refer to the test harness and automated tests fo
 
 ---
 
-**Version**: 2.1.0  
+**Version**: 2.2.0  
 **Status**: Enterprise Ready ✅  
 **Last Updated**: 2026-08-09  
+
+## v2.2.0 Changes
+- **RequestSession objects**: Isolated session tracking with attempt history and completion state
+- **Session-based callbacks**: All async handlers use session objects instead of integer IDs
+- **Enhanced fallback tracking**: Session history tracks all provider attempts and fallbacks
+- **Improved timeout management**: Session-scoped timeout handles for better cleanup
 
 ## v2.1.0 Changes
 - **Unique container IDs**: Dynamic ID generation per instance prevents multi-slot conflicts
