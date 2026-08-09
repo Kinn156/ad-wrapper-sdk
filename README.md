@@ -1,6 +1,6 @@
-# Universal Ad Wrapper SDK v2.2.0 - Enterprise Edition
+# Universal Ad Wrapper SDK v2.2.0 - Production-Grade Developer SDK
 
-A lightweight, zero-dependency client-side JavaScript Ad Wrapper SDK with multi-provider support, intelligent environment detection, obfuscated platform keys, robust failure fallback handling, and enterprise-grade security features.
+A lightweight, zero-dependency client-side JavaScript Ad Wrapper SDK with multi-provider support, intelligent environment detection, obfuscated platform keys, robust failure fallback handling, and production-grade security features.
 
 ## 🚀 Features
 
@@ -14,11 +14,12 @@ A lightweight, zero-dependency client-side JavaScript Ad Wrapper SDK with multi-
 
 ### Security & Reliability
 - **Key Obfuscation**: Platform keys stored as Base64 to prevent plain-text searching
+  - *Note: Base64 key encoding is used for code obfuscation and clean delivery, not cryptographic key concealment.*
 - **Environment-Aware Routing**: Unity Ads for mobile/tablet, A-Ads for desktop
 - **Failure Handling**: Comprehensive error handling with automatic fallback
 - **Retry Logic**: Configurable maximum retry attempts (default: 2)
 - **Clean DOM Management**: Prevents conflicts between different ad providers
-- **Sandboxed Iframes**: Custom HTML rendered in isolated sandboxed iframes
+- **Sandboxed Iframes**: Custom HTML rendered in isolated sandboxed iframes (without allow-same-origin)
 - **Script Deduplication**: State-based script loading with callback queuing
 - **Request Timeouts**: Configurable timeout safeguards for external requests
 - **Consent Metadata Storage & Forwarding**: GDPR and US Privacy consent string injection with HTML escaping
@@ -349,7 +350,7 @@ For issues or questions, please refer to the test harness and automated tests fo
 ---
 
 **Version**: 2.2.0  
-**Status**: Enterprise Ready ✅  
+**Status**: Production-Grade Developer SDK ✅  
 **Last Updated**: 2026-08-09  
 
 ## v2.2.0 Changes
