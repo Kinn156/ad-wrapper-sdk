@@ -40,6 +40,27 @@
       return false;
     }
 
+    // Clean up any active incomplete session
+    if (this.activeSession && !this.activeSession.completed) {
+      console.warn('[AdWrapper] Cleaning up incomplete session during re-initialization');
+      if (this.activeSession.timeoutHandle) {
+        clearTimeout(this.activeSession.timeoutHandle);
+        var timeoutIndex = this.pendingTimeouts.indexOf(this.activeSession.timeoutHandle);
+        if (timeoutIndex > -1) {
+          this.pendingTimeouts.splice(timeoutIndex, 1);
+        }
+        this.activeSession.timeoutHandle = null;
+      }
+      this.activeSession.completed = true;
+    }
+    
+    // Reset consent to defaults
+    this.consent = {
+      gdprApplies: false,
+      tcString: '',
+      uspString: ''
+    };
+
     this.config = config;
     this.container = document.getElementById(config.containerId);
 
@@ -610,9 +631,9 @@
     session.history.push('fallback_' + failureReason);
 
     console.warn('[AdWrapper] Ad load failed: ' + failureReason);
-    console.warn('[AdWrapper] Fallback attempt: ' + session.attempt + '/' + MAX_RETRY_ATTEMPTS);
+    console.warn('[AdWrapper] Fallback attempt: ' + session.attempt + '/' + this.maxRetryAttempts);
 
-    if (session.attempt <= MAX_RETRY_ATTEMPTS) {
+    if (session.attempt <= this.maxRetryAttempts) {
       this.executeFallback(failureReason, session);
     } else {
       console.error('[AdWrapper] Max retry attempts reached. Showing fallback placeholder.');
@@ -633,8 +654,8 @@
       return false;
     }
     
-    // Determine what was the last attempted provider
-    var lastProvider = this.lastProvider || '';
+    // Determine what was the last attempted provider from session history
+    var lastProvider = session.history.length > 0 ? session.history[session.history.length - 1] : '';
     var wasPlatformAd = lastProvider.indexOf('platform_') === 0;
     var wasDeveloperAd = lastProvider.indexOf('developer_') === 0;
     var wasFallbackAd = lastProvider.indexOf('fallback_') === 0;
@@ -749,7 +770,7 @@
     messageDiv.style.color = '#666';
     messageDiv.style.fontSize = '12px';
     messageDiv.style.textAlign = 'center';
-    messageDiv.textContent = 'Failed to load ad after multiple attempts. Error: ' + this.escapeHtml(failureReason);
+    messageDiv.textContent = 'Failed to load ad after multiple attempts. Error: ' + failureReason;
     placeholder.appendChild(messageDiv);
     
     this.container.appendChild(placeholder);
