@@ -1,4 +1,4 @@
-# Universal Ad Wrapper SDK v2.0.0 - Enterprise Edition
+# Universal Ad Wrapper SDK v2.1.0 - Enterprise Edition
 
 A lightweight, zero-dependency client-side JavaScript Ad Wrapper SDK with multi-provider support, intelligent environment detection, obfuscated platform keys, robust failure fallback handling, and enterprise-grade security features.
 
@@ -19,19 +19,21 @@ A lightweight, zero-dependency client-side JavaScript Ad Wrapper SDK with multi-
 - **Retry Logic**: Configurable maximum retry attempts (default: 2)
 - **Clean DOM Management**: Prevents conflicts between different ad providers
 - **Sandboxed Iframes**: Custom HTML rendered in isolated sandboxed iframes
-- **Script Deduplication**: Prevents duplicate SDK script injections
+- **Script Deduplication**: State-based script loading with callback queuing
 - **Request Timeouts**: Configurable timeout safeguards for external requests
-- **Consent Management**: GDPR and US Privacy consent string support
+- **Consent Metadata Storage & Forwarding**: GDPR and US Privacy consent string injection with HTML escaping
+- **Request Isolation**: Stale-callback protection prevents race conditions
+- **Unique Container IDs**: Dynamic ID generation prevents multi-slot conflicts
 
 ## 📦 Installation
 
 Include the minified SDK in your HTML via jsDelivr CDN:
 
 ```html
-<script src="https://cdn.jsdelivr.net/gh/Kinn156/ad-wrapper-sdk@v2.0.0/dist/ad-wrapper.min.js"></script>
+<script src="https://cdn.jsdelivr.net/gh/Kinn156/ad-wrapper-sdk@v2.1.0/dist/ad-wrapper.min.js"></script>
 ```
 
-### ES5 Constructor Pattern (v2.0.0)
+### ES5 Constructor Pattern (v2.1.0)
 
 For multiple ad slots, create isolated instances:
 
@@ -345,9 +347,16 @@ For issues or questions, please refer to the test harness and automated tests fo
 
 ---
 
-**Version**: 2.0.0  
+**Version**: 2.1.0  
 **Status**: Enterprise Ready ✅  
 **Last Updated**: 2026-08-09  
+
+## v2.1.0 Changes
+- **Unique container IDs**: Dynamic ID generation per instance prevents multi-slot conflicts
+- **Request isolation**: Stale-callback protection prevents race conditions from rapid loadAd() calls
+- **Script state registry**: State-based script loading ('loading', 'loaded', 'error') with callback queuing
+- **Consent escaping**: HTML special character escaping for consent metadata
+- **Consent metadata refinement**: Labeled as metadata storage & forwarding (not standalone CMP)
 
 ## v2.0.0 Changes
 - **Instance-based state**: Multiple ad slots can operate independently

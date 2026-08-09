@@ -12,6 +12,7 @@
   var DEFAULT_TIMEOUT = 5000;
 
   window.__adWrapperLoadedScripts = window.__adWrapperLoadedScripts || {};
+  window.__adWrapperScriptCallbacks = window.__adWrapperScriptCallbacks || {};
 
   function AdWrapper() {
     this.config = null;
@@ -27,6 +28,8 @@
       tcString: '',
       uspString: ''
     };
+    this.uniqueId = 'adw-' + Math.random().toString(36).substr(2, 9);
+    this.activeRequestId = 0;
   }
 
   AdWrapper.prototype.init = function(config) {
@@ -79,6 +82,7 @@
       return false;
     }
 
+    this.activeRequestId++;
     this.currentAttempt = 0;
     this.executeAdRequest();
     return true;
@@ -166,22 +170,43 @@
 
     var scriptUrl = 'https://cdp.unity3d.com/sdk/web/UnityAds.min.js';
     var self = this;
+    var currentReq = this.activeRequestId;
 
-    if (window.__adWrapperLoadedScripts[scriptUrl]) {
-      this.executeUnityAdLoad(gameId, isPlatform);
+    if (window.__adWrapperLoadedScripts[scriptUrl] === 'loaded') {
+      this.executeUnityAdLoad(gameId, isPlatform, currentReq);
+    } else if (window.__adWrapperLoadedScripts[scriptUrl] === 'loading') {
+      if (!window.__adWrapperScriptCallbacks[scriptUrl]) {
+        window.__adWrapperScriptCallbacks[scriptUrl] = [];
+      }
+      window.__adWrapperScriptCallbacks[scriptUrl].push(function() {
+        if (currentReq === self.activeRequestId) {
+          self.executeUnityAdLoad(gameId, isPlatform, currentReq);
+        }
+      });
     } else {
+      window.__adWrapperLoadedScripts[scriptUrl] = 'loading';
+      window.__adWrapperScriptCallbacks[scriptUrl] = [];
+      
       var unityScript = document.createElement('script');
       unityScript.src = scriptUrl;
       unityScript.async = true;
       
       unityScript.onload = function() {
-        window.__adWrapperLoadedScripts[scriptUrl] = true;
-        self.executeUnityAdLoad(gameId, isPlatform);
+        window.__adWrapperLoadedScripts[scriptUrl] = 'loaded';
+        var callbacks = window.__adWrapperScriptCallbacks[scriptUrl] || [];
+        for (var i = 0; i < callbacks.length; i++) {
+          callbacks[i]();
+        }
+        window.__adWrapperScriptCallbacks[scriptUrl] = [];
+        if (currentReq === self.activeRequestId) {
+          self.executeUnityAdLoad(gameId, isPlatform, currentReq);
+        }
       };
 
       unityScript.onerror = function() {
+        window.__adWrapperLoadedScripts[scriptUrl] = 'error';
         console.error('[AdWrapper] Failed to load Unity Ads SDK');
-        if (FALLBACK_ENABLED) {
+        if (currentReq === self.activeRequestId && FALLBACK_ENABLED) {
           self.triggerFallback('unity_sdk_load_error');
         }
       };
@@ -190,7 +215,7 @@
     }
 
     var placeholder = document.createElement('div');
-    placeholder.id = 'unity-ad-container';
+    placeholder.id = this.uniqueId + '-unity';
     placeholder.style.width = '100%';
     placeholder.style.height = '100%';
     placeholder.style.display = 'flex';
@@ -201,28 +226,42 @@
     this.container.appendChild(placeholder);
   };
 
-  AdWrapper.prototype.executeUnityAdLoad = function(gameId, isPlatform) {
+  AdWrapper.prototype.executeUnityAdLoad = function(gameId, isPlatform, currentReq) {
     var self = this;
     var timeoutId = setTimeout(function() {
-      console.error('[AdWrapper] Unity Ads initialization timeout');
-      if (FALLBACK_ENABLED) {
-        self.triggerFallback('unity_init_timeout');
+      if (currentReq === self.activeRequestId) {
+        console.error('[AdWrapper] Unity Ads initialization timeout');
+        if (FALLBACK_ENABLED) {
+          self.triggerFallback('unity_init_timeout');
+        }
       }
     }, this.timeout);
     this.pendingTimeouts.push(timeoutId);
 
     if (window.UnityAds) {
       window.UnityAds.initialize(gameId, function() {
+        if (currentReq !== self.activeRequestId) {
+          clearTimeout(timeoutId);
+          return;
+        }
         clearTimeout(timeoutId);
         window.UnityAds.show(function() {
-          self.onAdSuccess('unity');
+          if (currentReq === self.activeRequestId) {
+            self.onAdSuccess('unity');
+          }
         }, function(error) {
-          console.error('[AdWrapper] Unity Ad error:', error);
-          if (FALLBACK_ENABLED) {
-            self.triggerFallback('unity_ad_error');
+          if (currentReq === self.activeRequestId) {
+            console.error('[AdWrapper] Unity Ad error:', error);
+            if (FALLBACK_ENABLED) {
+              self.triggerFallback('unity_ad_error');
+            }
           }
         });
       }, function(error) {
+        if (currentReq !== self.activeRequestId) {
+          clearTimeout(timeoutId);
+          return;
+        }
         clearTimeout(timeoutId);
         console.error('[AdWrapper] Unity Ads initialization error:', error);
         if (FALLBACK_ENABLED) {
@@ -232,7 +271,7 @@
     } else {
       clearTimeout(timeoutId);
       console.error('[AdWrapper] Unity Ads SDK not available');
-      if (FALLBACK_ENABLED) {
+      if (currentReq === self.activeRequestId && FALLBACK_ENABLED) {
         self.triggerFallback('unity_sdk_unavailable');
       }
     }
@@ -251,64 +290,96 @@
 
     var self = this;
     var scriptUrl = 'https://securepubads.g.doubleclick.net/tag/js/gpt.js';
+    var currentReq = this.activeRequestId;
 
     if (!window.googletag) {
-      if (window.__adWrapperLoadedScripts[scriptUrl]) {
+      if (window.__adWrapperLoadedScripts[scriptUrl] === 'loaded') {
         window.googletag = window.googletag || {};
         window.googletag.cmd = window.googletag.cmd || [];
-        this.executeGoogleAd(keys.googleAdSlot);
+        this.executeGoogleAd(keys.googleAdSlot, currentReq);
+      } else if (window.__adWrapperLoadedScripts[scriptUrl] === 'loading') {
+        if (!window.__adWrapperScriptCallbacks[scriptUrl]) {
+          window.__adWrapperScriptCallbacks[scriptUrl] = [];
+        }
+        window.__adWrapperScriptCallbacks[scriptUrl].push(function() {
+          if (currentReq === self.activeRequestId) {
+            window.googletag = window.googletag || {};
+            window.googletag.cmd = window.googletag.cmd || [];
+            self.executeGoogleAd(keys.googleAdSlot, currentReq);
+          }
+        });
       } else {
+        window.__adWrapperLoadedScripts[scriptUrl] = 'loading';
+        window.__adWrapperScriptCallbacks[scriptUrl] = [];
+        
         var gptScript = document.createElement('script');
         gptScript.src = scriptUrl;
         gptScript.async = true;
         gptScript.onload = function() {
-          window.__adWrapperLoadedScripts[scriptUrl] = true;
-          window.googletag = window.googletag || {};
-          window.googletag.cmd = window.googletag.cmd || [];
-          self.executeGoogleAd(keys.googleAdSlot);
+          window.__adWrapperLoadedScripts[scriptUrl] = 'loaded';
+          var callbacks = window.__adWrapperScriptCallbacks[scriptUrl] || [];
+          for (var i = 0; i < callbacks.length; i++) {
+            callbacks[i]();
+          }
+          window.__adWrapperScriptCallbacks[scriptUrl] = [];
+          if (currentReq === self.activeRequestId) {
+            window.googletag = window.googletag || {};
+            window.googletag.cmd = window.googletag.cmd || [];
+            self.executeGoogleAd(keys.googleAdSlot, currentReq);
+          }
         };
         gptScript.onerror = function() {
+          window.__adWrapperLoadedScripts[scriptUrl] = 'error';
           console.error('[AdWrapper] Failed to load Google GPT SDK');
-          if (FALLBACK_ENABLED) {
+          if (currentReq === self.activeRequestId && FALLBACK_ENABLED) {
             self.triggerFallback('google_sdk_load_error');
           }
         };
         document.head.appendChild(gptScript);
       }
     } else {
-      this.executeGoogleAd(keys.googleAdSlot);
+      this.executeGoogleAd(keys.googleAdSlot, currentReq);
     }
   };
 
-  AdWrapper.prototype.executeGoogleAd = function(adSlot) {
+  AdWrapper.prototype.executeGoogleAd = function(adSlot, currentReq) {
     var self = this;
+    var uniqueContainerId = this.uniqueId + '-gpt';
     var timeoutId = setTimeout(function() {
-      console.error('[AdWrapper] Google GPT display timeout');
-      if (FALLBACK_ENABLED) {
-        self.triggerFallback('google_display_timeout');
+      if (currentReq === self.activeRequestId) {
+        console.error('[AdWrapper] Google GPT display timeout');
+        if (FALLBACK_ENABLED) {
+          self.triggerFallback('google_display_timeout');
+        }
       }
     }, this.timeout);
     this.pendingTimeouts.push(timeoutId);
 
     window.googletag.cmd.push(function() {
       try {
+        if (currentReq !== self.activeRequestId) {
+          clearTimeout(timeoutId);
+          return;
+        }
         clearTimeout(timeoutId);
-        var slot = window.googletag.defineSlot(adSlot, [[300, 250], [728, 90]], 'google-ad-container')
+        var slot = window.googletag.defineSlot(adSlot, [[300, 250], [728, 90]], uniqueContainerId)
           .addService(window.googletag.pubads());
         window.googletag.enableServices();
-        window.googletag.display('google-ad-container');
+        window.googletag.display(uniqueContainerId);
         self.onAdSuccess('gpt');
       } catch (error) {
-        clearTimeout(timeoutId);
-        console.error('[AdWrapper] Google Ad display error:', error);
-        if (FALLBACK_ENABLED) {
-          self.triggerFallback('google_display_error');
+        if (currentReq === self.activeRequestId) {
+          clearTimeout(timeoutId);
+          console.error('[AdWrapper] Google Ad display error:', error);
+          if (FALLBACK_ENABLED) {
+            self.triggerFallback('google_display_error');
+          }
         }
       }
     });
 
     var adContainer = document.createElement('div');
-    adContainer.id = 'google-ad-container';
+    adContainer.id = uniqueContainerId;
     adContainer.style.width = '100%';
     adContainer.style.height = '100%';
     this.container.appendChild(adContainer);
@@ -327,20 +398,42 @@
 
     var self = this;
     var scriptUrl = 'https://cdn.applovin.com/ads/applovin-max-web-sdk.js';
+    var currentReq = this.activeRequestId;
+    var uniqueContainerId = this.uniqueId + '-applovin';
 
-    if (window.__adWrapperLoadedScripts[scriptUrl]) {
-      this.executeAppLovinAdLoad(keys.applovinZoneId);
+    if (window.__adWrapperLoadedScripts[scriptUrl] === 'loaded') {
+      this.executeAppLovinAdLoad(keys.applovinZoneId, uniqueContainerId, currentReq);
+    } else if (window.__adWrapperLoadedScripts[scriptUrl] === 'loading') {
+      if (!window.__adWrapperScriptCallbacks[scriptUrl]) {
+        window.__adWrapperScriptCallbacks[scriptUrl] = [];
+      }
+      window.__adWrapperScriptCallbacks[scriptUrl].push(function() {
+        if (currentReq === self.activeRequestId) {
+          self.executeAppLovinAdLoad(keys.applovinZoneId, uniqueContainerId, currentReq);
+        }
+      });
     } else {
+      window.__adWrapperLoadedScripts[scriptUrl] = 'loading';
+      window.__adWrapperScriptCallbacks[scriptUrl] = [];
+      
       var applovinScript = document.createElement('script');
       applovinScript.src = scriptUrl;
       applovinScript.async = true;
       applovinScript.onload = function() {
-        window.__adWrapperLoadedScripts[scriptUrl] = true;
-        self.executeAppLovinAdLoad(keys.applovinZoneId);
+        window.__adWrapperLoadedScripts[scriptUrl] = 'loaded';
+        var callbacks = window.__adWrapperScriptCallbacks[scriptUrl] || [];
+        for (var i = 0; i < callbacks.length; i++) {
+          callbacks[i]();
+        }
+        window.__adWrapperScriptCallbacks[scriptUrl] = [];
+        if (currentReq === self.activeRequestId) {
+          self.executeAppLovinAdLoad(keys.applovinZoneId, uniqueContainerId, currentReq);
+        }
       };
       applovinScript.onerror = function() {
+        window.__adWrapperLoadedScripts[scriptUrl] = 'error';
         console.error('[AdWrapper] Failed to load AppLovin SDK');
-        if (FALLBACK_ENABLED) {
+        if (currentReq === self.activeRequestId && FALLBACK_ENABLED) {
           self.triggerFallback('applovin_sdk_load_error');
         }
       };
@@ -348,18 +441,20 @@
     }
 
     var adContainer = document.createElement('div');
-    adContainer.id = 'applovin-ad-container';
+    adContainer.id = uniqueContainerId;
     adContainer.style.width = '100%';
     adContainer.style.height = '100%';
     this.container.appendChild(adContainer);
   };
 
-  AdWrapper.prototype.executeAppLovinAdLoad = function(zoneId) {
+  AdWrapper.prototype.executeAppLovinAdLoad = function(zoneId, uniqueContainerId, currentReq) {
     var self = this;
     var timeoutId = setTimeout(function() {
-      console.error('[AdWrapper] AppLovin initialization timeout');
-      if (FALLBACK_ENABLED) {
-        self.triggerFallback('applovin_init_timeout');
+      if (currentReq === self.activeRequestId) {
+        console.error('[AdWrapper] AppLovin initialization timeout');
+        if (FALLBACK_ENABLED) {
+          self.triggerFallback('applovin_init_timeout');
+        }
       }
     }, this.timeout);
     this.pendingTimeouts.push(timeoutId);
@@ -367,27 +462,35 @@
     if (window.AppLovinMAX) {
       try {
         window.AppLovinMAX.initialize(zoneId, function() {
+          if (currentReq !== self.activeRequestId) {
+            clearTimeout(timeoutId);
+            return;
+          }
           clearTimeout(timeoutId);
-          window.AppLovinMAX.showBanner(zoneId, 'applovin-ad-container');
+          window.AppLovinMAX.showBanner(zoneId, uniqueContainerId);
           self.onAdSuccess('applovin');
         }, function(error) {
-          clearTimeout(timeoutId);
-          console.error('[AdWrapper] AppLovin initialization error:', error);
-          if (FALLBACK_ENABLED) {
-            self.triggerFallback('applovin_init_error');
+          if (currentReq === self.activeRequestId) {
+            clearTimeout(timeoutId);
+            console.error('[AdWrapper] AppLovin initialization error:', error);
+            if (FALLBACK_ENABLED) {
+              self.triggerFallback('applovin_init_error');
+            }
           }
         });
       } catch (error) {
-        clearTimeout(timeoutId);
-        console.error('[AdWrapper] AppLovin SDK error:', error);
-        if (FALLBACK_ENABLED) {
-          self.triggerFallback('applovin_sdk_error');
+        if (currentReq === self.activeRequestId) {
+          clearTimeout(timeoutId);
+          console.error('[AdWrapper] AppLovin SDK error:', error);
+          if (FALLBACK_ENABLED) {
+            self.triggerFallback('applovin_sdk_error');
+          }
         }
       }
     } else {
       clearTimeout(timeoutId);
       console.error('[AdWrapper] AppLovin MAX SDK not available');
-      if (FALLBACK_ENABLED) {
+      if (currentReq === self.activeRequestId && FALLBACK_ENABLED) {
         self.triggerFallback('applovin_sdk_unavailable');
       }
     }
@@ -406,20 +509,42 @@
 
     var self = this;
     var scriptUrl = 'https://a-ads.com/ads.js';
+    var currentReq = this.activeRequestId;
+    var uniqueContainerId = this.uniqueId + '-aads';
 
-    if (window.__adWrapperLoadedScripts[scriptUrl]) {
-      this.executeAAdsAdLoad(zoneId);
+    if (window.__adWrapperLoadedScripts[scriptUrl] === 'loaded') {
+      this.executeAAdsAdLoad(zoneId, uniqueContainerId, currentReq);
+    } else if (window.__adWrapperLoadedScripts[scriptUrl] === 'loading') {
+      if (!window.__adWrapperScriptCallbacks[scriptUrl]) {
+        window.__adWrapperScriptCallbacks[scriptUrl] = [];
+      }
+      window.__adWrapperScriptCallbacks[scriptUrl].push(function() {
+        if (currentReq === self.activeRequestId) {
+          self.executeAAdsAdLoad(zoneId, uniqueContainerId, currentReq);
+        }
+      });
     } else {
+      window.__adWrapperLoadedScripts[scriptUrl] = 'loading';
+      window.__adWrapperScriptCallbacks[scriptUrl] = [];
+      
       var aAdsScript = document.createElement('script');
       aAdsScript.src = scriptUrl;
       aAdsScript.async = true;
       aAdsScript.onload = function() {
-        window.__adWrapperLoadedScripts[scriptUrl] = true;
-        self.executeAAdsAdLoad(zoneId);
+        window.__adWrapperLoadedScripts[scriptUrl] = 'loaded';
+        var callbacks = window.__adWrapperScriptCallbacks[scriptUrl] || [];
+        for (var i = 0; i < callbacks.length; i++) {
+          callbacks[i]();
+        }
+        window.__adWrapperScriptCallbacks[scriptUrl] = [];
+        if (currentReq === self.activeRequestId) {
+          self.executeAAdsAdLoad(zoneId, uniqueContainerId, currentReq);
+        }
       };
       aAdsScript.onerror = function() {
+        window.__adWrapperLoadedScripts[scriptUrl] = 'error';
         console.error('[AdWrapper] Failed to load A-Ads SDK');
-        if (FALLBACK_ENABLED) {
+        if (currentReq === self.activeRequestId && FALLBACK_ENABLED) {
           self.triggerFallback('aads_sdk_load_error');
         }
       };
@@ -427,7 +552,7 @@
     }
 
     var placeholder = document.createElement('div');
-    placeholder.id = 'a-ads-placeholder';
+    placeholder.id = this.uniqueId + '-aads-placeholder';
     placeholder.style.width = '100%';
     placeholder.style.height = '100%';
     placeholder.style.display = 'flex';
@@ -438,19 +563,21 @@
     this.container.appendChild(placeholder);
   };
 
-  AdWrapper.prototype.executeAAdsAdLoad = function(zoneId) {
+  AdWrapper.prototype.executeAAdsAdLoad = function(zoneId, uniqueContainerId, currentReq) {
     var self = this;
     var timeoutId = setTimeout(function() {
-      console.error('[AdWrapper] A-Ads display timeout');
-      if (FALLBACK_ENABLED) {
-        self.triggerFallback('aads_display_timeout');
+      if (currentReq === self.activeRequestId) {
+        console.error('[AdWrapper] A-Ads display timeout');
+        if (FALLBACK_ENABLED) {
+          self.triggerFallback('aads_display_timeout');
+        }
       }
     }, this.timeout);
     this.pendingTimeouts.push(timeoutId);
 
     try {
       var adContainer = document.createElement('div');
-      adContainer.id = 'a-ads-ad-container';
+      adContainer.id = uniqueContainerId;
       adContainer.style.width = '100%';
       adContainer.style.height = '100%';
       adContainer.setAttribute('data-aads-zone', zoneId);
@@ -458,20 +585,22 @@
       
       if (window.aads) {
         clearTimeout(timeoutId);
-        window.aads.show(zoneId, 'a-ads-ad-container');
+        window.aads.show(zoneId, uniqueContainerId);
         self.onAdSuccess('a-ads');
       } else {
         clearTimeout(timeoutId);
         console.error('[AdWrapper] A-Ads global not available');
-        if (FALLBACK_ENABLED) {
+        if (currentReq === self.activeRequestId && FALLBACK_ENABLED) {
           self.triggerFallback('aads_global_unavailable');
         }
       }
     } catch (error) {
-      clearTimeout(timeoutId);
-      console.error('[AdWrapper] A-Ads display error:', error);
-      if (FALLBACK_ENABLED) {
-        self.triggerFallback('aads_display_error');
+      if (currentReq === self.activeRequestId) {
+        clearTimeout(timeoutId);
+        console.error('[AdWrapper] A-Ads display error:', error);
+        if (FALLBACK_ENABLED) {
+          self.triggerFallback('aads_display_error');
+        }
       }
     }
   };
@@ -490,10 +619,12 @@
     
     var consentMeta = '';
     if (this.consent.gdprApplies) {
-      consentMeta = '<meta name="gdpr-consent" content="' + this.consent.tcString + '">';
+      var escapedTcString = this.escapeHtml(this.consent.tcString);
+      consentMeta = '<meta name="gdpr-consent" content="' + escapedTcString + '">';
     }
     if (this.consent.uspString) {
-      consentMeta += '<meta name="usp-consent" content="' + this.consent.uspString + '">';
+      var escapedUspString = this.escapeHtml(this.consent.uspString);
+      consentMeta += '<meta name="usp-consent" content="' + escapedUspString + '">';
     }
 
     var safeHtml = '<!DOCTYPE html><html><head>' + consentMeta + '</head><body style="margin:0;padding:0;">' + customHtml + '</body></html>';
@@ -506,6 +637,15 @@
     doc.close();
 
     this.onAdSuccess('custom');
+  };
+
+  AdWrapper.prototype.escapeHtml = function(str) {
+    if (!str) return '';
+    return str.replace(/&/g, '&amp;')
+              .replace(/"/g, '&quot;')
+              .replace(/'/g, '&#39;')
+              .replace(/</g, '&lt;')
+              .replace(/>/g, '&gt;');
   };
 
   AdWrapper.prototype.triggerFallback = function(failureReason) {
