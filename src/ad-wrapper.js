@@ -655,7 +655,7 @@
     iframe.style.height = '100%';
     iframe.style.border = 'none';
     iframe.style.overflow = 'hidden';
-    iframe.setAttribute('sandbox', 'allow-scripts allow-same-origin allow-forms allow-popups');
+    iframe.setAttribute('sandbox', 'allow-scripts allow-forms allow-popups');
     iframe.setAttribute('loading', 'lazy');
     
     var consentMeta = '';
