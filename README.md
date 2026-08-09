@@ -1,15 +1,16 @@
-# Universal Ad Wrapper SDK - Production Ready
+# Universal Ad Wrapper SDK v2.0.0 - Enterprise Edition
 
-A lightweight, zero-dependency client-side JavaScript Ad Wrapper SDK with multi-provider support, intelligent environment detection, obfuscated platform keys, and robust failure fallback handling.
+A lightweight, zero-dependency client-side JavaScript Ad Wrapper SDK with multi-provider support, intelligent environment detection, obfuscated platform keys, robust failure fallback handling, and enterprise-grade security features.
 
 ## 🚀 Features
 
 ### Core Functionality
-- **Multi-Provider Support**: Google AdSense, Unity Ads, AppLovin, A-Ads, and custom HTML tags
+- **Multi-Provider Support**: Google Publisher Tag (GPT), Unity Ads, AppLovin, A-Ads, and custom HTML tags
 - **10% Platform Takeover**: Probabilistic routing for platform monetization
 - **Environment Detection**: Automatic detection of mobile, tablet, and desktop environments
 - **Fallback Mechanism**: Intelligent retry system with configurable fallback providers
 - **Obfuscated Keys**: Base64-encoded platform master keys for security
+- **Instance-Based State**: Multiple ad slots can operate independently without state conflicts
 
 ### Security & Reliability
 - **Key Obfuscation**: Platform keys stored as Base64 to prevent plain-text searching
@@ -17,13 +18,37 @@ A lightweight, zero-dependency client-side JavaScript Ad Wrapper SDK with multi-
 - **Failure Handling**: Comprehensive error handling with automatic fallback
 - **Retry Logic**: Configurable maximum retry attempts (default: 2)
 - **Clean DOM Management**: Prevents conflicts between different ad providers
+- **Sandboxed Iframes**: Custom HTML rendered in isolated sandboxed iframes
+- **Script Deduplication**: Prevents duplicate SDK script injections
+- **Request Timeouts**: Configurable timeout safeguards for external requests
+- **Consent Management**: GDPR and US Privacy consent string support
 
 ## 📦 Installation
 
 Include the minified SDK in your HTML via jsDelivr CDN:
 
 ```html
-<script src="https://cdn.jsdelivr.net/gh/Kinn156/ad-wrapper-sdk@v1.0.0/dist/ad-wrapper.min.js"></script>
+<script src="https://cdn.jsdelivr.net/gh/Kinn156/ad-wrapper-sdk@v2.0.0/dist/ad-wrapper.min.js"></script>
+```
+
+### ES5 Constructor Pattern (v2.0.0)
+
+For multiple ad slots, create isolated instances:
+
+```javascript
+const adSlot1 = new AdWrapper();
+adSlot1.init({ containerId: 'ad-slot-1', developerConfig: {...} });
+
+const adSlot2 = new AdWrapper();
+adSlot2.init({ containerId: 'ad-slot-2', developerConfig: {...} });
+```
+
+### Singleton Compatibility (Backwards Compatible)
+
+For single ad slot usage, the singleton pattern still works:
+
+```javascript
+AdWrapperSingleton.init({ containerId: 'ad-slot-1', developerConfig: {...} });
 ```
 
 ## 🔧 Configuration
@@ -31,24 +56,27 @@ Include the minified SDK in your HTML via jsDelivr CDN:
 ### Basic Setup
 
 ```javascript
-AdWrapper.init({
+const adWrapper = new AdWrapper();
+adWrapper.init({
   containerId: "ad-slot-1",
   developerConfig: {
-    provider: "google", // or "unity", "applovin", "a-ads", "custom_tag"
+    provider: "gpt", // or "google" (alias), "unity", "applovin", "a-ads", "custom_tag"
     keys: {
       googleAdSlot: "/12345/developer_banner"
     }
   }
 });
+adWrapper.loadAd();
 ```
 
 ### Advanced Configuration with Fallback
 
 ```javascript
-AdWrapper.init({
+const adWrapper = new AdWrapper();
+adWrapper.init({
   containerId: "ad-slot-1",
   developerConfig: {
-    provider: "google",
+    provider: "gpt",
     keys: {
       googleAdSlot: "/12345/developer_banner"
     },
@@ -56,15 +84,22 @@ AdWrapper.init({
     fallbackKeys: {
       customHtml: '<div>Fallback Ad</div>'
     }
+  },
+  timeout: 5000, // Request timeout in milliseconds
+  consent: {
+    gdprApplies: true,
+    tcString: "CPxxxx...",
+    uspString: "1YNN"
   }
 });
+adWrapper.loadAd();
 ```
 
 ### Loading Ads
 
 ```javascript
 // Load a single ad
-AdWrapper.loadAd();
+adWrapper.loadAd();
 ```
 
 ## 🎯 Platform Takeover Configuration
@@ -162,9 +197,9 @@ Open `index.html` in a browser to access the interactive test harness:
 
 ## 📊 Supported Providers
 
-### Google AdSense
+### Google Publisher Tag (GPT)
 ```javascript
-provider: "google",
+provider: "gpt", // or "google" for backwards compatibility
 keys: {
   googleAdSlot: "/12345/developer_banner"
 }
@@ -208,6 +243,10 @@ keys: {
 2. **Key Masking**: Keys are partially obfuscated in console logs
 3. **No External Dependencies**: Zero-dependency reduces attack surface
 4. **DOM Isolation**: Ads loaded in isolated containers
+5. **Sandboxed Iframes**: Custom HTML rendered in sandboxed iframes with restricted permissions
+6. **Script Deduplication**: Global registry prevents duplicate SDK injections
+7. **Request Timeouts**: Automatic fallback on slow or hung requests
+8. **Consent Management**: GDPR and US Privacy string injection for compliance
 
 ## 📈 Statistics & Monitoring
 
@@ -233,6 +272,12 @@ Development build with source maps:
 npm run dev
 ```
 
+Run E2E tests:
+
+```bash
+npm run test:e2e
+```
+
 ## 📝 File Structure
 
 ```
@@ -253,19 +298,34 @@ ADS AGGREGATOR/
 ### Takeover Rate
 Default: 10% (0.10)
 ```javascript
-AdWrapper.setTakeoverRate(0.15); // Set to 15%
+adWrapper.setTakeoverRate(0.15); // Set to 15%
 ```
 
 ### Fallback Enabled
 Default: true
 ```javascript
-AdWrapper.setFallbackEnabled(false); // Disable fallback
+adWrapper.setFallbackEnabled(false); // Disable fallback
 ```
 
 ### Max Retry Attempts
 Default: 2
 ```javascript
-AdWrapper.setMaxRetryAttempts(3); // Set to 3 attempts
+adWrapper.setMaxRetryAttempts(3); // Set to 3 attempts
+```
+
+### Request Timeout
+Default: 5000ms
+```javascript
+adWrapper.setTimeout(10000); // Set to 10 seconds
+```
+
+### Consent Management
+```javascript
+adWrapper.setConsent({
+  gdprApplies: true,
+  tcString: "CPxxxx...",
+  uspString: "1YNN"
+});
 ```
 
 ## 🌐 Browser Compatibility
@@ -285,6 +345,15 @@ For issues or questions, please refer to the test harness and automated tests fo
 
 ---
 
-**Version**: 1.0.0  
-**Status**: Production Ready ✅  
-**Last Updated**: 2026-08-02
+**Version**: 2.0.0  
+**Status**: Enterprise Ready ✅  
+**Last Updated**: 2026-08-09  
+
+## v2.0.0 Changes
+- **Instance-based state**: Multiple ad slots can operate independently
+- **Script deduplication**: Prevents duplicate SDK script injections
+- **Request timeouts**: Configurable timeout safeguards (default: 5000ms)
+- **Sandboxed iframes**: Custom HTML rendered in isolated sandboxed iframes
+- **Consent management**: GDPR and US Privacy string support
+- **GPT provider**: Renamed "google" to "gpt" with backwards compatibility alias
+- **E2E testing**: Puppeteer-based headless browser test suite
