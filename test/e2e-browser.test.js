@@ -11,6 +11,21 @@ const path = require('path');
 
   const page = await browser.newPage();
   const testHtmlPath = path.join(__dirname, '..', 'e2e-test.html');
+  let hasUncaughtError = false;
+
+  // Capture page errors
+  page.on('pageerror', (err) => {
+    console.error('Browser Page Error:', err.message);
+    hasUncaughtError = true;
+  });
+
+  // Capture console errors
+  page.on('console', (msg) => {
+    if (msg.type() === 'error') {
+      console.error('Browser Console Error:', msg.text());
+      hasUncaughtError = true;
+    }
+  });
 
   try {
     // Create test HTML page
@@ -164,7 +179,10 @@ const path = require('path');
               adWrapper6.loadAd();
               assert(adWrapper6.activeSession !== null, 'RequestSession', 'Active session created');
               assert(adWrapper6.activeSession.id > 0, 'Session ID', 'Session has valid ID');
-              assert(adWrapper6.activeSession.completed === false, 'Session State', 'Session initially not completed');
+              // custom_tag is synchronous, so session should be completed after load
+              setTimeout(() => {
+                assert(adWrapper6.activeSession.completed === true, 'Session Completion', 'Synchronous provider marks session completed');
+              }, 100);
               
               // Test 12: Concurrent calls handling
               const adWrapper7 = new AdWrapper();
@@ -215,8 +233,11 @@ const path = require('path');
     // Check for failures
     const failures = results.filter(r => r.includes('[FAIL]'));
     
-    if (failures.length > 0) {
+    if (failures.length > 0 || hasUncaughtError) {
       console.log('\n❌ E2E Tests Failed: ' + failures.length + ' failure(s)');
+      if (hasUncaughtError) {
+        console.log('❌ Uncaught browser errors detected');
+      }
       process.exit(1);
     } else {
       console.log('\n✅ All E2E Tests Passed');

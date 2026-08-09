@@ -859,6 +859,60 @@
     }
   };
 
+  AdWrapper.prototype.loadScript = function(url) {
+    var self = this;
+    
+    if (window.__adWrapperLoadedScripts[url] === 'loaded') {
+      return Promise.resolve();
+    }
+    
+    if (window.__adWrapperLoadedScripts[url] === 'loading') {
+      return new Promise(function(resolve, reject) {
+        if (!window.__adWrapperScriptCallbacks[url]) {
+          window.__adWrapperScriptCallbacks[url] = [];
+        }
+        window.__adWrapperScriptCallbacks[url].push(function() {
+          if (window.__adWrapperLoadedScripts[url] === 'loaded') {
+            resolve();
+          } else {
+            reject(new Error('Script loading failed: ' + url));
+          }
+        });
+      });
+    }
+    
+    window.__adWrapperLoadedScripts[url] = 'loading';
+    window.__adWrapperScriptCallbacks[url] = [];
+    
+    return new Promise(function(resolve, reject) {
+      var script = document.createElement('script');
+      script.src = url;
+      script.async = true;
+      
+      script.onload = function() {
+        window.__adWrapperLoadedScripts[url] = 'loaded';
+        var callbacks = window.__adWrapperScriptCallbacks[url] || [];
+        for (var i = 0; i < callbacks.length; i++) {
+          callbacks[i]();
+        }
+        window.__adWrapperScriptCallbacks[url] = [];
+        resolve();
+      };
+      
+      script.onerror = function() {
+        window.__adWrapperLoadedScripts[url] = 'error';
+        var callbacks = window.__adWrapperScriptCallbacks[url] || [];
+        for (var i = 0; i < callbacks.length; i++) {
+          callbacks[i]();
+        }
+        window.__adWrapperScriptCallbacks[url] = [];
+        reject(new Error('Failed to load script: ' + url));
+      };
+      
+      document.head.appendChild(script);
+    });
+  };
+
   AdWrapper.prototype.obfuscateKey = function(key) {
     if (!key || key.length < 4) return '***';
     return key.substring(0, 2) + '***' + key.substring(key.length - 2);
