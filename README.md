@@ -1,4 +1,4 @@
-# Universal Ad Wrapper SDK v2.2.1 - Hardened Developer SDK
+# Universal Ad Wrapper SDK v2.2.2 - Instance-Scoped Developer SDK
 
 A lightweight, zero-dependency client-side JavaScript Ad Wrapper SDK with multi-provider support, intelligent environment detection, obfuscated platform keys, robust failure fallback handling, and production-grade security features.
 
@@ -32,10 +32,10 @@ A lightweight, zero-dependency client-side JavaScript Ad Wrapper SDK with multi-
 Include the minified SDK in your HTML via jsDelivr CDN:
 
 ```html
-<script src="https://cdn.jsdelivr.net/gh/Kinn156/ad-wrapper-sdk@v2.2.1/dist/ad-wrapper.min.js"></script>
+<script src="https://cdn.jsdelivr.net/gh/Kinn156/ad-wrapper-sdk@v2.2.2/dist/ad-wrapper.min.js"></script>
 ```
 
-### ES5 Constructor Pattern (v2.2.1)
+### ES5 Constructor Pattern (v2.2.2)
 
 For multiple ad slots, create isolated instances:
 
@@ -349,9 +349,17 @@ For issues or questions, please refer to the test harness and automated tests fo
 
 ---
 
-**Version**: 2.2.1  
-**Status**: Hardened Developer SDK ✅  
+**Version**: 2.2.2  
+**Status**: Instance-Scoped Developer SDK ✅  
 **Last Updated**: 2026-08-09  
+
+## v2.2.2 Changes
+- **Instance-scoped configuration**: takeoverRate, fallbackEnabled, maxRetryAttempts moved to instance properties
+- **destroy() API**: New method for proper cleanup of sessions, timers, DOM elements, and GPT slots
+- **Auto-cancellation**: Incomplete sessions automatically cancelled when starting new requests
+- **Centralized script loading**: All providers use unified loadScript() with 10-second timeout
+- **Security hardening**: Sanitized error HTML using textContent instead of innerHTML
+- **Demo page fix**: Proper SDK instantiation with new AdWrapper() pattern
 
 ## v2.2.1 Changes
 - **Fallback routing fix**: Intelligent hierarchy (Platform → Developer → FallbackProvider → Platform)

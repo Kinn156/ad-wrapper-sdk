@@ -199,6 +199,21 @@ const path = require('path');
               const secondSessionId = adWrapper7.activeSession.id;
               assert(secondSessionId > firstSessionId, 'Concurrent Calls', 'Session ID increments on concurrent calls');
               
+              // Test 13: destroy() method cleanup
+              const adWrapper8 = new AdWrapper();
+              adWrapper8.init({
+                containerId: 'ad-slot-1',
+                developerConfig: {
+                  provider: 'custom_tag',
+                  keys: { customHtml: '<div>Destroy Test</div>' }
+                }
+              });
+              adWrapper8.loadAd();
+              adWrapper8.destroy();
+              assert(adWrapper8.activeSession === null, 'Destroy Method', 'Active session cleared after destroy');
+              assert(adWrapper8.initialized === false, 'Destroy Initialized', 'Initialized flag reset after destroy');
+              assert(adWrapper8.activeRequestId === 0, 'Destroy Request ID', 'Active request ID reset after destroy');
+              
               logResult('E2E Suite', true, 'All tests completed (' + testCount + ' tests, ' + passCount + ' passed, ' + failCount + ' failed)');
             }, 1000);
             
