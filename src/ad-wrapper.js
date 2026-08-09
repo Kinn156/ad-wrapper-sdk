@@ -704,7 +704,8 @@
     if (session.attempt <= MAX_RETRY_ATTEMPTS) {
       this.executeFallback(failureReason, session);
     } else {
-      console.error('[AdWrapper] Max retry attempts reached. Giving up.');
+      console.error('[AdWrapper] Max retry attempts reached. Showing fallback placeholder.');
+      this.showFallbackPlaceholder(failureReason, session);
       session.completed = true;
     }
   };
@@ -721,24 +722,66 @@
       return false;
     }
     
-    if (!this.config.developerConfig || !this.config.developerConfig.fallbackProvider) {
-      console.error('[AdWrapper] No fallback provider configured');
+    // Determine what was the last attempted provider
+    var lastProvider = this.lastProvider || '';
+    var wasPlatformAd = lastProvider.indexOf('platform_') === 0;
+    var wasDeveloperAd = lastProvider.indexOf('developer_') === 0;
+    var wasFallbackAd = lastProvider.indexOf('fallback_') === 0;
+    
+    var fallbackProvider = null;
+    var fallbackKeys = null;
+    var isPlatform = false;
+    
+    // Hierarchy: Platform -> Developer -> FallbackProvider -> Platform (last resort)
+    if (wasPlatformAd) {
+      // Platform ad failed, try developer provider
+      if (this.config.developerConfig && this.config.developerConfig.provider) {
+        fallbackProvider = this.config.developerConfig.provider;
+        fallbackKeys = this.config.developerConfig.keys || {};
+        console.log('[AdWrapper] Fallback: Platform -> Developer (' + fallbackProvider + ')');
+      } else {
+        // No developer config, try platform again with different provider
+        isPlatform = true;
+        fallbackProvider = this.environment === 'mobile' || this.environment === 'tablet' ? 'a-ads' : 'unity';
+        fallbackKeys = this.environment === 'mobile' || this.environment === 'tablet' 
+          ? PLATFORM_MASTER_KEYS.webZoneId 
+          : PLATFORM_MASTER_KEYS.unityAppId;
+        console.log('[AdWrapper] Fallback: Platform -> Platform (' + fallbackProvider + ')');
+      }
+    } else {
+      // Developer or fallback ad failed
+      if (this.config.developerConfig && this.config.developerConfig.fallbackProvider) {
+        fallbackProvider = this.config.developerConfig.fallbackProvider;
+        fallbackKeys = this.config.developerConfig.fallbackKeys || {};
+        console.log('[AdWrapper] Fallback: Developer -> FallbackProvider (' + fallbackProvider + ')');
+      } else {
+        // No fallback provider, try platform as last resort
+        isPlatform = true;
+        fallbackProvider = this.environment === 'mobile' || this.environment === 'tablet' ? 'unity' : 'a-ads';
+        fallbackKeys = this.environment === 'mobile' || this.environment === 'tablet' 
+          ? PLATFORM_MASTER_KEYS.unityAppId 
+          : PLATFORM_MASTER_KEYS.webZoneId;
+        console.log('[AdWrapper] Fallback: Developer -> Platform (' + fallbackProvider + ')');
+      }
+    }
+    
+    if (!fallbackProvider) {
+      console.error('[AdWrapper] No fallback provider available');
+      this.showFallbackPlaceholder('no_fallback_available', session);
+      session.completed = true;
       return false;
     }
-
-    var fallbackProvider = this.config.developerConfig.fallbackProvider;
-    var fallbackKeys = this.config.developerConfig.fallbackKeys || {};
 
     if (fallbackProvider === 'google') {
       fallbackProvider = 'gpt';
     }
 
-    this.lastProvider = 'fallback_' + fallbackProvider;
-    session.history.push('fallback_' + fallbackProvider);
+    this.lastProvider = isPlatform ? 'platform_' + fallbackProvider : 'fallback_' + fallbackProvider;
+    session.history.push(this.lastProvider);
 
     switch (fallbackProvider) {
       case 'unity':
-        this.loadUnityAd(fallbackKeys.unityGameId, false, session);
+        this.loadUnityAd(fallbackKeys.unityGameId || fallbackKeys, isPlatform, session);
         break;
       case 'gpt':
         this.loadGoogleAd(fallbackKeys, session);
@@ -747,17 +790,28 @@
         this.loadAppLovinAd(fallbackKeys, session);
         break;
       case 'a-ads':
-        this.loadAAdsAd(fallbackKeys.aAdsZoneId, false, session);
+        this.loadAAdsAd(fallbackKeys.aAdsZoneId || fallbackKeys, isPlatform, session);
         break;
       case 'custom_tag':
         this.loadCustomTag(fallbackKeys, session);
         break;
       default:
         console.error('[AdWrapper] Unknown fallback provider: ' + fallbackProvider);
+        this.showFallbackPlaceholder('unknown_provider', session);
+        session.completed = true;
     }
   };
 
-  AdWrapper.prototype.showFallbackPlaceholder = function(failureReason) {
+  AdWrapper.prototype.showFallbackPlaceholder = function(failureReason, session) {
+    if (session && session.timeoutHandle) {
+      clearTimeout(session.timeoutHandle);
+      var timeoutIndex = this.pendingTimeouts.indexOf(session.timeoutHandle);
+      if (timeoutIndex > -1) {
+        this.pendingTimeouts.splice(timeoutIndex, 1);
+      }
+      session.timeoutHandle = null;
+    }
+    
     this.clearContainer();
     
     var placeholder = document.createElement('div');
@@ -783,6 +837,15 @@
   AdWrapper.prototype.onAdSuccess = function(provider, session) {
     if (!session || session.completed) {
       return;
+    }
+    
+    if (session.timeoutHandle) {
+      clearTimeout(session.timeoutHandle);
+      var timeoutIndex = this.pendingTimeouts.indexOf(session.timeoutHandle);
+      if (timeoutIndex > -1) {
+        this.pendingTimeouts.splice(timeoutIndex, 1);
+      }
+      session.timeoutHandle = null;
     }
     
     session.completed = true;
