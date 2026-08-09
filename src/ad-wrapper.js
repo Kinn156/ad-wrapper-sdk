@@ -22,6 +22,11 @@
     this.lastProvider = null;
     this.timeout = DEFAULT_TIMEOUT;
     this.pendingTimeouts = [];
+    this.consent = {
+      gdprApplies: false,
+      tcString: '',
+      uspString: ''
+    };
   }
 
   AdWrapper.prototype.init = function(config) {
@@ -41,6 +46,12 @@
     this.environment = this.detectEnvironment();
     this.initialized = true;
     this.timeout = config.timeout || DEFAULT_TIMEOUT;
+    
+    if (config.consent) {
+      this.consent.gdprApplies = config.consent.gdprApplies || false;
+      this.consent.tcString = config.consent.tcString || '';
+      this.consent.uspString = config.consent.uspString || '';
+    }
     
     return true;
   };
@@ -474,13 +485,26 @@
     iframe.style.height = '100%';
     iframe.style.border = 'none';
     iframe.style.overflow = 'hidden';
+    iframe.setAttribute('sandbox', 'allow-scripts allow-same-origin allow-forms allow-popups');
+    iframe.setAttribute('loading', 'lazy');
+    
+    var consentMeta = '';
+    if (this.consent.gdprApplies) {
+      consentMeta = '<meta name="gdpr-consent" content="' + this.consent.tcString + '">';
+    }
+    if (this.consent.uspString) {
+      consentMeta += '<meta name="usp-consent" content="' + this.consent.uspString + '">';
+    }
 
-    var doc = iframe.contentDocument || iframe.contentWindow.document;
-    doc.open();
-    doc.write(customHtml);
-    doc.close();
+    var safeHtml = '<!DOCTYPE html><html><head>' + consentMeta + '</head><body style="margin:0;padding:0;">' + customHtml + '</body></html>';
 
     this.container.appendChild(iframe);
+    
+    var doc = iframe.contentDocument || iframe.contentWindow.document;
+    doc.open();
+    doc.write(safeHtml);
+    doc.close();
+
     this.onAdSuccess('custom');
   };
 
@@ -625,6 +649,18 @@
       this.timeout = timeout;
     } else {
       console.error('[AdWrapper] Invalid timeout. Must be between 1000 and 30000ms');
+    }
+  };
+
+  AdWrapper.prototype.getConsent = function() {
+    return this.consent;
+  };
+
+  AdWrapper.prototype.setConsent = function(consent) {
+    if (consent) {
+      this.consent.gdprApplies = consent.gdprApplies || false;
+      this.consent.tcString = consent.tcString || '';
+      this.consent.uspString = consent.uspString || '';
     }
   };
 
