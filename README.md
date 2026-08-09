@@ -1,4 +1,4 @@
-# Universal Ad Wrapper SDK v2.2.2 - Instance-Scoped Developer SDK
+# Universal Ad Wrapper SDK v2.2.3 - Emergency Patch Developer SDK
 
 A lightweight, zero-dependency client-side JavaScript Ad Wrapper SDK with multi-provider support, intelligent environment detection, obfuscated platform keys, robust failure fallback handling, and production-grade security features.
 
@@ -32,10 +32,10 @@ A lightweight, zero-dependency client-side JavaScript Ad Wrapper SDK with multi-
 Include the minified SDK in your HTML via jsDelivr CDN:
 
 ```html
-<script src="https://cdn.jsdelivr.net/gh/Kinn156/ad-wrapper-sdk@v2.2.2/dist/ad-wrapper.min.js"></script>
+<script src="https://cdn.jsdelivr.net/gh/Kinn156/ad-wrapper-sdk@v2.2.3/dist/ad-wrapper.min.js"></script>
 ```
 
-### ES5 Constructor Pattern (v2.2.2)
+### ES5 Constructor Pattern (v2.2.3)
 
 For multiple ad slots, create isolated instances:
 
@@ -349,9 +349,16 @@ For issues or questions, please refer to the test harness and automated tests fo
 
 ---
 
-**Version**: 2.2.2  
-**Status**: Instance-Scoped Developer SDK ✅  
-**Last Updated**: 2026-08-09  
+**Version**: 2.2.3  
+**Status**: Emergency Patch Developer SDK ✅  
+**Last Updated**: 2026-08-10  
+
+## v2.2.3 Changes
+- **Emergency ReferenceError fix**: Replaced undefined MAX_RETRY_ATTEMPTS references with instance property
+- **Double-escaping fix**: Removed unnecessary escapeHtml() calls on textContent assignments
+- **Session isolation**: Provider tracking now uses session.history instead of global instance state
+- **Init cleanup**: Added session cleanup and consent reset on re-initialization
+- **Version sync**: Synchronized version metadata across all repository files
 
 ## v2.2.2 Changes
 - **Instance-scoped configuration**: takeoverRate, fallbackEnabled, maxRetryAttempts moved to instance properties

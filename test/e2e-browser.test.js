@@ -3,7 +3,7 @@ const fs = require('fs');
 const path = require('path');
 
 (async () => {
-  console.log('Starting E2E Browser Tests for Ad Wrapper SDK v2.2.0...\n');
+  console.log('Starting E2E Browser Tests for Ad Wrapper SDK v2.2.3...\n');
 
   const browser = await puppeteer.launch({
     args: ['--no-sandbox', '--disable-setuid-sandbox']
@@ -179,10 +179,8 @@ const path = require('path');
               adWrapper6.loadAd();
               assert(adWrapper6.activeSession !== null, 'RequestSession', 'Active session created');
               assert(adWrapper6.activeSession.id > 0, 'Session ID', 'Session has valid ID');
-              // custom_tag is synchronous, so session should be completed after load
-              setTimeout(() => {
-                assert(adWrapper6.activeSession.completed === true, 'Session Completion', 'Synchronous provider marks session completed');
-              }, 100);
+              // custom_tag is synchronous, so session should be completed immediately after load
+              assert(adWrapper6.activeSession.completed === true, 'Session Completion', 'Synchronous provider marks session completed');
               
               // Test 12: Concurrent calls handling
               const adWrapper7 = new AdWrapper();
