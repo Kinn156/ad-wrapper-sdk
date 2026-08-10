@@ -1,4 +1,4 @@
-# Universal Ad Wrapper SDK v2.2.6 - Bug Fix Developer SDK
+# Universal Ad Wrapper SDK v2.2.7 - Security & Script Loader Hardening
 
 A lightweight, zero-dependency client-side JavaScript Ad Wrapper SDK with multi-provider support, intelligent environment detection, obfuscated platform keys, robust failure fallback handling, and production-grade security features.
 
@@ -32,10 +32,10 @@ A lightweight, zero-dependency client-side JavaScript Ad Wrapper SDK with multi-
 Include the minified SDK in your HTML via jsDelivr CDN:
 
 ```html
-<script src="https://cdn.jsdelivr.net/gh/Kinn156/ad-wrapper-sdk@v2.2.6/dist/ad-wrapper.min.js"></script>
+<script src="https://cdn.jsdelivr.net/gh/Kinn156/ad-wrapper-sdk@v2.2.7/dist/ad-wrapper.min.js"></script>
 ```
 
-### ES5 Constructor Pattern (v2.2.6)
+### ES5 Constructor Pattern (v2.2.7)
 
 For multiple ad slots, create isolated instances:
 
@@ -349,9 +349,16 @@ For issues or questions, please refer to the test harness and automated tests fo
 
 ---
 
-**Version**: 2.2.6  
-**Status**: Final Hardening ✅  
+**Version**: 2.2.7  
+**Status**: Security & Script Loader Hardening ✅  
 **Last Updated**: 2026-08-10  
+
+## v2.2.7 Changes
+- **House ad sandbox security**: Removed `allow-scripts` and `allow-same-origin` from house ad iframe sandbox, using only `allow-popups allow-forms` for static image ads
+- **Script loader robustness**: Added `settled` flag to `loadScript()` to prevent multiple completion events (onload, onerror, timeout) from executing
+- **Console listener fixes**: Fixed variable name typos in index.html console parser (msg → message) and regex corrections
+- **Enhanced security posture**: House ads now render with minimal permissions, reducing XSS risk
+- **Race condition prevention**: Script loading now properly handles edge cases where multiple terminal events fire simultaneously
 
 ## v2.2.6 Changes
 - **GPT listener cleanup**: Added named function reference for slotRenderEnded with removeEventListener to prevent listener stacking

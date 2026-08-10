@@ -842,11 +842,11 @@
     iframe.style.height = '100%';
     iframe.style.border = 'none';
     iframe.style.overflow = 'hidden';
-    iframe.setAttribute('sandbox', 'allow-scripts allow-same-origin');
+    iframe.setAttribute('sandbox', 'allow-popups allow-forms');
     
-    // Build house ad HTML
-    var houseAdHtml = '<!DOCTYPE html><html><head><style>body{margin:0;padding:0;display:flex;justify-content:center;align-items:center;height:100vh;overflow:hidden;}a{text-decoration:none;}img{max-width:100%;max-height:100%;}</style></head><body>';
-    houseAdHtml += '<a href="' + this.escapeHtml(houseAd.clickUrl) + '" target="_blank">';
+    // Build house ad HTML (static only, no scripts needed)
+    var houseAdHtml = '<!DOCTYPE html><html><head><style>body{margin:0;padding:0;display:flex;justify-content:center;align-items:center;height:100vh;overflow:hidden;}a{text-decoration:none;display:block;}img{max-width:100%;max-height:100%;object-fit:contain;}</style></head><body>';
+    houseAdHtml += '<a href="' + this.escapeHtml(houseAd.clickUrl) + '" target="_top">';
     houseAdHtml += '<img src="' + this.escapeHtml(houseAd.imageUrl) + '" alt="House Ad" />';
     houseAdHtml += '</a></body></html>';
     
@@ -948,7 +948,12 @@
       script.src = url;
       script.async = true;
       
+      var settled = false;
+      
       var timeoutId = setTimeout(function() {
+        if (settled) return;
+        settled = true;
+        
         window.__adWrapperLoadedScripts[url] = 'error';
         var callbacks = window.__adWrapperScriptCallbacks[url] || [];
         for (var i = 0; i < callbacks.length; i++) {
@@ -959,6 +964,9 @@
       }, 10000); // 10-second timeout
       
       script.onload = function() {
+        if (settled) return;
+        settled = true;
+        
         clearTimeout(timeoutId);
         window.__adWrapperLoadedScripts[url] = 'loaded';
         var callbacks = window.__adWrapperScriptCallbacks[url] || [];
@@ -970,6 +978,9 @@
       };
       
       script.onerror = function() {
+        if (settled) return;
+        settled = true;
+        
         clearTimeout(timeoutId);
         window.__adWrapperLoadedScripts[url] = 'error';
         var callbacks = window.__adWrapperScriptCallbacks[url] || [];
