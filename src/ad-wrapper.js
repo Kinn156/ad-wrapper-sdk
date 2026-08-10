@@ -799,6 +799,7 @@
     session.completed = true;
     session.history.push('success_' + provider);
     console.log('[AdWrapper] Ad loaded successfully with provider: ' + provider);
+    console.log('[AdWrapper Event] provider_loaded: { provider: ' + provider + ' }');
   };
 
   AdWrapper.prototype.clearContainer = function() {

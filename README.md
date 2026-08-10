@@ -1,4 +1,4 @@
-# Universal Ad Wrapper SDK v2.2.3 - Emergency Patch Developer SDK
+# Universal Ad Wrapper SDK v2.2.4 - Production Lifecycle Developer SDK
 
 A lightweight, zero-dependency client-side JavaScript Ad Wrapper SDK with multi-provider support, intelligent environment detection, obfuscated platform keys, robust failure fallback handling, and production-grade security features.
 
@@ -32,10 +32,10 @@ A lightweight, zero-dependency client-side JavaScript Ad Wrapper SDK with multi-
 Include the minified SDK in your HTML via jsDelivr CDN:
 
 ```html
-<script src="https://cdn.jsdelivr.net/gh/Kinn156/ad-wrapper-sdk@v2.2.3/dist/ad-wrapper.min.js"></script>
+<script src="https://cdn.jsdelivr.net/gh/Kinn156/ad-wrapper-sdk@v2.2.4/dist/ad-wrapper.min.js"></script>
 ```
 
-### ES5 Constructor Pattern (v2.2.3)
+### ES5 Constructor Pattern (v2.2.4)
 
 For multiple ad slots, create isolated instances:
 
@@ -349,9 +349,17 @@ For issues or questions, please refer to the test harness and automated tests fo
 
 ---
 
-**Version**: 2.2.3  
-**Status**: Emergency Patch Developer SDK ✅  
+**Version**: 2.2.4  
+**Status**: Production Lifecycle Developer SDK ✅  
 **Last Updated**: 2026-08-10  
+
+## v2.2.4 Changes
+- **GPT render confirmation**: Added slotRenderEnded event listener to detect empty GPT slots
+- **GPT slot lifecycle**: Destroy existing GPT slots before creating new ones to prevent conflicts
+- **Session-owned timers**: Refactored all timeouts to be strictly session-owned via session.timeoutHandle
+- **Timer isolation**: Removed global pendingTimeouts array, fallback now only affects specific session
+- **Structured events**: Added [AdWrapper Event] logs for demo UI statistics parsing
+- **Demo stats update**: Console parser now listens for structured events to update platform/developer stats
 
 ## v2.2.3 Changes
 - **Emergency ReferenceError fix**: Replaced undefined MAX_RETRY_ATTEMPTS references with instance property
