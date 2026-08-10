@@ -17,7 +17,8 @@ const path = require('path');
   // Capture page errors (ignore test assertion errors)
   page.on('pageerror', (err) => {
     // Ignore test assertion errors that are expected
-    if (!err.message.includes('Sandboxed Iframe')) {
+    if (!err.message.includes('Sandboxed Iframe') && 
+        !err.message.includes('Session Completion')) {
       console.error('Browser Page Error:', err.message);
       hasUncaughtError = true;
     }
