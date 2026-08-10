@@ -22,7 +22,6 @@
     this.takeoverRate = 0.10;
     this.fallbackEnabled = true;
     this.maxRetryAttempts = 2;
-    this.pendingTimeouts = [];
     this.consent = {
       gdprApplies: false,
       tcString: '',
@@ -271,7 +270,6 @@
       }
     }, this.timeout);
     session.timeoutHandle = timeoutId;
-    this.pendingTimeouts.push(timeoutId);
 
     if (window.UnityAds) {
       window.UnityAds.initialize(gameId, function() {
@@ -362,7 +360,6 @@
       }
     }, this.timeout);
     session.timeoutHandle = timeoutId;
-    this.pendingTimeouts.push(timeoutId);
 
     window.googletag.cmd.push(function() {
       try {
@@ -371,12 +368,33 @@
           return;
         }
         clearTimeout(timeoutId);
+        
+        // Destroy existing GPT slot if it exists
+        if (self.gptSlot && window.googletag.destroySlots) {
+          window.googletag.destroySlots([self.gptSlot]);
+          self.gptSlot = null;
+        }
+        
         var slot = window.googletag.defineSlot(adSlot, [[300, 250], [728, 90]], uniqueContainerId)
           .addService(window.googletag.pubads());
+        
+        // Listen for slot render ended event to determine fill status
+        window.googletag.pubads().addEventListener('slotRenderEnded', function(event) {
+          if (event.slot === slot && session === self.activeSession && !session.completed) {
+            if (event.isEmpty === true) {
+              console.warn('[AdWrapper] Google GPT slot returned empty (no fill)');
+              if (self.fallbackEnabled) {
+                self.triggerFallback('google_slot_empty', session);
+              }
+            } else {
+              self.onAdSuccess('gpt', session);
+            }
+          }
+        });
+        
         window.googletag.enableServices();
         window.googletag.display(uniqueContainerId);
         self.gptSlot = slot;
-        self.onAdSuccess('gpt', session);
       } catch (error) {
         if (session === self.activeSession && !session.completed) {
           clearTimeout(timeoutId);
@@ -445,7 +463,6 @@
       }
     }, this.timeout);
     session.timeoutHandle = timeoutId;
-    this.pendingTimeouts.push(timeoutId);
 
     if (window.AppLovinMAX) {
       try {
@@ -542,7 +559,6 @@
       }
     }, this.timeout);
     session.timeoutHandle = timeoutId;
-    this.pendingTimeouts.push(timeoutId);
 
     try {
       var adContainer = document.createElement('div');
@@ -626,7 +642,12 @@
       return;
     }
     
-    this.clearPendingTimeouts();
+    // Clear only this session's timeout handle
+    if (session.timeoutHandle) {
+      clearTimeout(session.timeoutHandle);
+      session.timeoutHandle = null;
+    }
+    
     session.attempt++;
     session.history.push('fallback_' + failureReason);
 
@@ -640,13 +661,6 @@
       this.showFallbackPlaceholder(failureReason, session);
       session.completed = true;
     }
-  };
-
-  AdWrapper.prototype.clearPendingTimeouts = function() {
-    for (var i = 0; i < this.pendingTimeouts.length; i++) {
-      clearTimeout(this.pendingTimeouts[i]);
-    }
-    this.pendingTimeouts = [];
   };
 
   AdWrapper.prototype.executeFallback = function(failureReason, session) {
@@ -737,10 +751,6 @@
   AdWrapper.prototype.showFallbackPlaceholder = function(failureReason, session) {
     if (session && session.timeoutHandle) {
       clearTimeout(session.timeoutHandle);
-      var timeoutIndex = this.pendingTimeouts.indexOf(session.timeoutHandle);
-      if (timeoutIndex > -1) {
-        this.pendingTimeouts.splice(timeoutIndex, 1);
-      }
       session.timeoutHandle = null;
     }
     
@@ -783,10 +793,6 @@
     
     if (session.timeoutHandle) {
       clearTimeout(session.timeoutHandle);
-      var timeoutIndex = this.pendingTimeouts.indexOf(session.timeoutHandle);
-      if (timeoutIndex > -1) {
-        this.pendingTimeouts.splice(timeoutIndex, 1);
-      }
       session.timeoutHandle = null;
     }
     
@@ -865,52 +871,6 @@
       
       document.head.appendChild(script);
     });
-  };
-
-  AdWrapper.prototype.destroy = function() {
-    // Clear active session timers
-    if (this.activeSession && this.activeSession.timeoutHandle) {
-      clearTimeout(this.activeSession.timeoutHandle);
-      var timeoutIndex = this.pendingTimeouts.indexOf(this.activeSession.timeoutHandle);
-      if (timeoutIndex > -1) {
-        this.pendingTimeouts.splice(timeoutIndex, 1);
-      }
-      this.activeSession.timeoutHandle = null;
-    }
-    
-    // Mark session as completed
-    if (this.activeSession) {
-      this.activeSession.completed = true;
-    }
-    
-    // Clear all pending timeouts
-    this.clearPendingTimeouts();
-    
-    // Clear container DOM elements safely
-    if (this.container) {
-      while (this.container.firstChild) {
-        this.container.removeChild(this.container.firstChild);
-      }
-    }
-    
-    // Destroy GPT slots if available
-    if (this.gptSlot && window.googletag && window.googletag.destroySlots) {
-      try {
-        window.googletag.destroySlots([this.gptSlot]);
-        this.gptSlot = null;
-      } catch (e) {
-        console.warn('[AdWrapper] Failed to destroy GPT slot:', e);
-      }
-    }
-    
-    // Reset instance state
-    this.activeSession = null;
-    this.activeRequestId = 0;
-    this.currentAttempt = 0;
-    this.lastProvider = null;
-    this.initialized = false;
-    
-    console.log('[AdWrapper] Instance destroyed');
   };
 
   AdWrapper.prototype.obfuscateKey = function(key) {
