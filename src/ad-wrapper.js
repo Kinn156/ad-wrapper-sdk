@@ -17,7 +17,6 @@
     this.initialized = false;
     this.environment = null;
     this.currentAttempt = 0;
-    this.lastProvider = null;
     this.timeout = DEFAULT_TIMEOUT;
     this.takeoverRate = 0.10;
     this.fallbackEnabled = true;
@@ -42,10 +41,7 @@
     // Clean up any active incomplete session
     if (this.activeSession && !this.activeSession.completed) {
       console.warn('[AdWrapper] Cleaning up incomplete session during re-initialization');
-      if (this.activeSession.timeoutHandle) {
-        clearTimeout(this.activeSession.timeoutHandle);
-        this.activeSession.timeoutHandle = null;
-      }
+      this.cleanupSession(this.activeSession);
       this.activeSession.completed = true;
     }
     
@@ -103,10 +99,7 @@
     // Auto-cancel incomplete session if exists
     if (this.activeSession && !this.activeSession.completed) {
       console.warn('[AdWrapper] Cancelling incomplete session before starting new request');
-      if (this.activeSession.timeoutHandle) {
-        clearTimeout(this.activeSession.timeoutHandle);
-        this.activeSession.timeoutHandle = null;
-      }
+      this.cleanupSession(this.activeSession);
       this.activeSession.completed = true;
     }
 
@@ -149,7 +142,6 @@
       ? PLATFORM_MASTER_KEYS.unityAppId 
       : PLATFORM_MASTER_KEYS.webZoneId;
 
-    this.lastProvider = 'platform_' + provider;
     session.history.push('platform_' + provider);
     session.attemptedProviders.push(provider);
 
@@ -180,7 +172,6 @@
       provider = 'gpt';
     }
     
-    this.lastProvider = 'developer_' + provider;
     session.history.push('developer_' + provider);
     session.attemptedProviders.push(provider);
 
@@ -348,6 +339,16 @@
     var uniqueContainerId = this.uniqueId + '-gpt';
     var timeoutId = setTimeout(function() {
       if (session === self.activeSession && !session.completed) {
+        // Remove GPT listener on timeout
+        if (session.gptRenderHandler && window.googletag && window.googletag.pubads) {
+          try {
+            window.googletag.pubads().removeEventListener('slotRenderEnded', session.gptRenderHandler);
+            session.gptRenderHandler = null;
+          } catch (e) {
+            console.warn('[AdWrapper] Error removing GPT listener on timeout:', e);
+          }
+        }
+        
         console.error('[AdWrapper] Google GPT display timeout');
         if (self.fallbackEnabled) {
           self.triggerFallback('google_display_timeout', session);
@@ -381,6 +382,7 @@
           if (event.slot === session.gptSlot && session === self.activeSession && !session.completed) {
             // Remove listener immediately to prevent stacking
             window.googletag.pubads().removeEventListener('slotRenderEnded', renderHandler);
+            session.gptRenderHandler = null;
             clearTimeout(session.timeoutHandle);
             
             if (event.isEmpty === true) {
@@ -393,6 +395,8 @@
             }
           }
         };
+        // Store handler reference for cleanup
+        session.gptRenderHandler = renderHandler;
         window.googletag.pubads().addEventListener('slotRenderEnded', renderHandler);
         
         window.googletag.enableServices();
@@ -796,8 +800,8 @@
       fallbackProvider = 'gpt';
     }
 
-    this.lastProvider = isPlatform ? 'platform_' + fallbackProvider : 'fallback_' + fallbackProvider;
-    session.history.push(this.lastProvider);
+    var providerPrefix = isPlatform ? 'platform_' : 'fallback_';
+    session.history.push(providerPrefix + fallbackProvider);
     session.attemptedProviders.push(fallbackProvider);
 
     switch (fallbackProvider) {
@@ -954,6 +958,11 @@
         if (settled) return;
         settled = true;
         
+        // Remove script tag from DOM on timeout
+        if (script.parentNode) {
+          script.parentNode.removeChild(script);
+        }
+        
         window.__adWrapperLoadedScripts[url] = 'error';
         var callbacks = window.__adWrapperScriptCallbacks[url] || [];
         for (var i = 0; i < callbacks.length; i++) {
@@ -982,6 +991,12 @@
         settled = true;
         
         clearTimeout(timeoutId);
+        
+        // Remove script tag from DOM on error
+        if (script.parentNode) {
+          script.parentNode.removeChild(script);
+        }
+        
         window.__adWrapperLoadedScripts[url] = 'error';
         var callbacks = window.__adWrapperScriptCallbacks[url] || [];
         for (var i = 0; i < callbacks.length; i++) {
@@ -1060,13 +1075,30 @@
     }
   };
 
-  AdWrapper.prototype.destroy = function() {
-    // Clean up active session
-    if (this.activeSession) {
-      if (this.activeSession.timeoutHandle) {
-        clearTimeout(this.activeSession.timeoutHandle);
-        this.activeSession.timeoutHandle = null;
+  AdWrapper.prototype.cleanupSession = function(session) {
+    if (!session) return;
+    
+    // Clear timeout handle
+    if (session.timeoutHandle) {
+      clearTimeout(session.timeoutHandle);
+      session.timeoutHandle = null;
+    }
+    
+    // Remove GPT event listener if exists
+    if (session.gptRenderHandler && window.googletag && window.googletag.pubads) {
+      try {
+        window.googletag.pubads().removeEventListener('slotRenderEnded', session.gptRenderHandler);
+        session.gptRenderHandler = null;
+      } catch (e) {
+        console.warn('[AdWrapper] Error removing GPT listener:', e);
       }
+    }
+  };
+
+  AdWrapper.prototype.destroy = function() {
+    // Clean up active session using centralized cleanup
+    if (this.activeSession) {
+      this.cleanupSession(this.activeSession);
       this.activeSession.completed = true;
       this.activeSession = null;
     }
@@ -1086,7 +1118,6 @@
     this.initialized = false;
     this.activeRequestId = 0;
     this.currentAttempt = 0;
-    this.lastProvider = null;
   };
 
   if (typeof module !== 'undefined' && module.exports) {

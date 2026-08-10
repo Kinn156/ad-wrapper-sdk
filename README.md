@@ -1,4 +1,4 @@
-# Universal Ad Wrapper SDK v2.2.7 - Security & Script Loader Hardening
+# Universal Ad Wrapper SDK v2.2.8 - Complete Edge-Case Hardening & Cleanup
 
 A lightweight, zero-dependency client-side JavaScript Ad Wrapper SDK with multi-provider support, intelligent environment detection, obfuscated platform keys, robust failure fallback handling, and production-grade security features.
 
@@ -32,10 +32,10 @@ A lightweight, zero-dependency client-side JavaScript Ad Wrapper SDK with multi-
 Include the minified SDK in your HTML via jsDelivr CDN:
 
 ```html
-<script src="https://cdn.jsdelivr.net/gh/Kinn156/ad-wrapper-sdk@v2.2.7/dist/ad-wrapper.min.js"></script>
+<script src="https://cdn.jsdelivr.net/gh/Kinn156/ad-wrapper-sdk@v2.2.8/dist/ad-wrapper.min.js"></script>
 ```
 
-### ES5 Constructor Pattern (v2.2.7)
+### ES5 Constructor Pattern (v2.2.8)
 
 For multiple ad slots, create isolated instances:
 
@@ -349,9 +349,17 @@ For issues or questions, please refer to the test harness and automated tests fo
 
 ---
 
-**Version**: 2.2.7  
-**Status**: Security & Script Loader Hardening ✅  
+**Version**: 2.2.8  
+**Status**: Complete Edge-Case Hardening & Cleanup ✅  
 **Last Updated**: 2026-08-10  
+
+## v2.2.8 Changes
+- **GPT listener teardown**: Added centralized `cleanupSession()` method and attached `renderHandler` to `session.gptRenderHandler` for proper cleanup on timeout/destroy
+- **DOM script cleanup**: Added script tag removal from DOM on timeout and error in `loadScript()` to prevent memory leaks
+- **State cleanup**: Removed redundant `this.lastProvider` state; all fallback routing now uses `session.history` and `session.attemptedProviders` exclusively
+- **Demo dashboard fix**: Fixed double-counting in index.html console parser to only process structured `[AdWrapper Event]` messages
+- **Memory leak prevention**: Comprehensive cleanup of GPT listeners, script tags, and session state
+- **Edge-case hardening**: Robust handling of timeout, destroy, and concurrent request scenarios
 
 ## v2.2.7 Changes
 - **House ad sandbox security**: Removed `allow-scripts` and `allow-same-origin` from house ad iframe sandbox, using only `allow-popups allow-forms` for static image ads
