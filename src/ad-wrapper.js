@@ -612,10 +612,8 @@
 
     this.container.appendChild(iframe);
     
-    var doc = iframe.contentDocument || iframe.contentWindow.document;
-    doc.open();
-    doc.write(safeHtml);
-    doc.close();
+    // Use data URL to avoid cross-origin issues with sandboxed iframes
+    iframe.src = 'data:text/html;charset=utf-8,' + encodeURIComponent(safeHtml);
 
     this.onAdSuccess('custom', session);
   };
@@ -929,6 +927,35 @@
       this.consent.tcString = consent.tcString || '';
       this.consent.uspString = consent.uspString || '';
     }
+  };
+
+  AdWrapper.prototype.destroy = function() {
+    // Clean up active session
+    if (this.activeSession) {
+      if (this.activeSession.timeoutHandle) {
+        clearTimeout(this.activeSession.timeoutHandle);
+        this.activeSession.timeoutHandle = null;
+      }
+      this.activeSession.completed = true;
+      this.activeSession = null;
+    }
+
+    // Clean up GPT slot
+    if (this.gptSlot && window.googletag && window.googletag.destroySlots) {
+      window.googletag.destroySlots([this.gptSlot]);
+      this.gptSlot = null;
+    }
+
+    // Clear container
+    if (this.container) {
+      this.container.innerHTML = '';
+    }
+
+    // Reset state
+    this.initialized = false;
+    this.activeRequestId = 0;
+    this.currentAttempt = 0;
+    this.lastProvider = null;
   };
 
   if (typeof module !== 'undefined' && module.exports) {

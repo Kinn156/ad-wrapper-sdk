@@ -354,6 +354,9 @@ For issues or questions, please refer to the test harness and automated tests fo
 **Last Updated**: 2026-08-10  
 
 ## v2.2.5 Changes
+- **Data URL custom tag loader**: Fixed cross-origin iframe issues by using data URL instead of contentDocument access
+- **Added destroy() method**: Implemented cleanup method for proper session, timer, DOM, and GPT slot cleanup
+- **Full E2E test suite pass**: All 21 tests now passing including sandboxed iframe security and destroy method tests
 - **TypeError fix**: Removed residual pendingTimeouts references causing runtime errors
 - **Session timer cleanup**: All timer cleanup now uses direct session.timeoutHandle checks
 - **Demo parser update**: Updated console parser to match new [AdWrapper Event] format
