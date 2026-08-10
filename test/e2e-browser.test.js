@@ -6,7 +6,8 @@ const path = require('path');
   console.log('Starting E2E Browser Tests for Ad Wrapper SDK v2.2.8...\n');
 
   const browser = await puppeteer.launch({
-    args: ['--no-sandbox', '--disable-setuid-sandbox']
+    headless: "new",
+    args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-dev-shm-usage']
   });
 
   const page = await browser.newPage();
@@ -242,7 +243,7 @@ const path = require('path');
     await page.goto('file://' + testHtmlPath);
 
     // Wait for tests to complete
-    await page.waitForTimeout(3000);
+    await page.waitForTimeout(2000);
 
     // Get test results
     const results = await page.evaluate(() => {
@@ -265,13 +266,21 @@ const path = require('path');
       process.exit(1);
     } else {
       console.log('\n✅ All E2E Tests Passed');
+      process.exit(0);
     }
 
+  } catch (error) {
+    console.error('Test execution error:', error);
+    process.exit(1);
   } finally {
     // Cleanup - always run regardless of test outcome
-    if (fs.existsSync(testHtmlPath)) {
-      fs.unlinkSync(testHtmlPath);
+    try {
+      if (fs.existsSync(testHtmlPath)) {
+        fs.unlinkSync(testHtmlPath);
+      }
+      await browser.close();
+    } catch (cleanupError) {
+      console.error('Cleanup error:', cleanupError);
     }
-    await browser.close();
   }
 })();
