@@ -1,6 +1,6 @@
 {
   "name": "ad-wrapper-sdk",
-  "version": "2.2.5",
+  "version": "2.2.6",
   "description": "Universal Ad Wrapper SDK with multi-provider support and 10% Unity takeover",
   "main": "dist/ad-wrapper.min.js",
   "scripts": {

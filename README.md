@@ -1,4 +1,4 @@
-# Universal Ad Wrapper SDK v2.2.5 - Bug Fix Developer SDK
+# Universal Ad Wrapper SDK v2.2.6 - Bug Fix Developer SDK
 
 A lightweight, zero-dependency client-side JavaScript Ad Wrapper SDK with multi-provider support, intelligent environment detection, obfuscated platform keys, robust failure fallback handling, and production-grade security features.
 
@@ -32,10 +32,10 @@ A lightweight, zero-dependency client-side JavaScript Ad Wrapper SDK with multi-
 Include the minified SDK in your HTML via jsDelivr CDN:
 
 ```html
-<script src="https://cdn.jsdelivr.net/gh/Kinn156/ad-wrapper-sdk@v2.2.5/dist/ad-wrapper.min.js"></script>
+<script src="https://cdn.jsdelivr.net/gh/Kinn156/ad-wrapper-sdk@v2.2.6/dist/ad-wrapper.min.js"></script>
 ```
 
-### ES5 Constructor Pattern (v2.2.5)
+### ES5 Constructor Pattern (v2.2.6)
 
 For multiple ad slots, create isolated instances:
 
@@ -349,9 +349,17 @@ For issues or questions, please refer to the test harness and automated tests fo
 
 ---
 
-**Version**: 2.2.5  
-**Status**: Bug Fix Developer SDK ✅  
+**Version**: 2.2.6  
+**Status**: Final Hardening ✅  
 **Last Updated**: 2026-08-10  
+
+## v2.2.6 Changes
+- **GPT listener cleanup**: Added named function reference for slotRenderEnded with removeEventListener to prevent listener stacking
+- **Strict fallback exclusion**: Implemented session.attemptedProviders tracking to prevent retrying already-failed networks in same request
+- **Emergency house ad**: Added fail-safe mechanism with emergencyHouseAd configuration for when all providers are exhausted
+- **Failure callback support**: Added onAdFailedToLoad callback in developerConfig for handling complete ad load failures
+- **Enhanced waterfall logic**: Improved fallback hierarchy with provider exclusion to avoid redundant requests
+- **Production hardening**: Critical reliability improvements for memory leak prevention and resource optimization
 
 ## v2.2.5 Changes
 - **Data URL custom tag loader**: Fixed cross-origin iframe issues by using data URL instead of contentDocument access
