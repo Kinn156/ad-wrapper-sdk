@@ -1,4 +1,4 @@
-# Universal Ad Wrapper SDK v2.2.4 - Production Lifecycle Developer SDK
+# Universal Ad Wrapper SDK v2.2.5 - Bug Fix Developer SDK
 
 A lightweight, zero-dependency client-side JavaScript Ad Wrapper SDK with multi-provider support, intelligent environment detection, obfuscated platform keys, robust failure fallback handling, and production-grade security features.
 
@@ -32,10 +32,10 @@ A lightweight, zero-dependency client-side JavaScript Ad Wrapper SDK with multi-
 Include the minified SDK in your HTML via jsDelivr CDN:
 
 ```html
-<script src="https://cdn.jsdelivr.net/gh/Kinn156/ad-wrapper-sdk@v2.2.4/dist/ad-wrapper.min.js"></script>
+<script src="https://cdn.jsdelivr.net/gh/Kinn156/ad-wrapper-sdk@v2.2.5/dist/ad-wrapper.min.js"></script>
 ```
 
-### ES5 Constructor Pattern (v2.2.4)
+### ES5 Constructor Pattern (v2.2.5)
 
 For multiple ad slots, create isolated instances:
 
@@ -349,9 +349,15 @@ For issues or questions, please refer to the test harness and automated tests fo
 
 ---
 
-**Version**: 2.2.4  
-**Status**: Production Lifecycle Developer SDK ✅  
+**Version**: 2.2.5  
+**Status**: Bug Fix Developer SDK ✅  
 **Last Updated**: 2026-08-10  
+
+## v2.2.5 Changes
+- **TypeError fix**: Removed residual pendingTimeouts references causing runtime errors
+- **Session timer cleanup**: All timer cleanup now uses direct session.timeoutHandle checks
+- **Demo parser update**: Updated console parser to match new [AdWrapper Event] format
+- **Code consistency**: Session-owned timer pattern applied consistently across all cleanup paths
 
 ## v2.2.4 Changes
 - **GPT render confirmation**: Added slotRenderEnded event listener to detect empty GPT slots

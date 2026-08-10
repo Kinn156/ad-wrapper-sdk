@@ -3,7 +3,7 @@ const fs = require('fs');
 const path = require('path');
 
 (async () => {
-  console.log('Starting E2E Browser Tests for Ad Wrapper SDK v2.2.4...\n');
+  console.log('Starting E2E Browser Tests for Ad Wrapper SDK v2.2.5...\n');
 
   const browser = await puppeteer.launch({
     args: ['--no-sandbox', '--disable-setuid-sandbox']
