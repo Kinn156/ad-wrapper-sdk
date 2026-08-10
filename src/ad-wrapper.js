@@ -44,10 +44,6 @@
       console.warn('[AdWrapper] Cleaning up incomplete session during re-initialization');
       if (this.activeSession.timeoutHandle) {
         clearTimeout(this.activeSession.timeoutHandle);
-        var timeoutIndex = this.pendingTimeouts.indexOf(this.activeSession.timeoutHandle);
-        if (timeoutIndex > -1) {
-          this.pendingTimeouts.splice(timeoutIndex, 1);
-        }
         this.activeSession.timeoutHandle = null;
       }
       this.activeSession.completed = true;
@@ -109,10 +105,6 @@
       console.warn('[AdWrapper] Cancelling incomplete session before starting new request');
       if (this.activeSession.timeoutHandle) {
         clearTimeout(this.activeSession.timeoutHandle);
-        var timeoutIndex = this.pendingTimeouts.indexOf(this.activeSession.timeoutHandle);
-        if (timeoutIndex > -1) {
-          this.pendingTimeouts.splice(timeoutIndex, 1);
-        }
         this.activeSession.timeoutHandle = null;
       }
       this.activeSession.completed = true;
