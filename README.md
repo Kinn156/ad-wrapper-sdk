@@ -1,438 +1,215 @@
-# Universal Ad Wrapper SDK v2.2.8 - Complete Edge-Case Hardening & Cleanup
+# Ad Wrapper SDK - Easy Ad Integration
 
-A lightweight, zero-dependency client-side JavaScript Ad Wrapper SDK with multi-provider support, intelligent environment detection, obfuscated platform keys, robust failure fallback handling, and production-grade security features.
+A simple way to display ads from multiple networks (Google AdSense, Unity Ads, AppLovin) on your website with automatic fallback if one network fails.
 
-## 🚀 Features
+## 🚀 Quick Start (30-Second Setup)
 
-### Core Functionality
-- **Multi-Provider Support**: Google Publisher Tag (GPT), Unity Ads, AppLovin, A-Ads, and custom HTML tags
-- **10% Platform Takeover**: Probabilistic routing for platform monetization
-- **Environment Detection**: Automatic detection of mobile, tablet, and desktop environments
-- **Fallback Mechanism**: Intelligent retry system with configurable fallback providers
-- **Obfuscated Keys**: Base64-encoded platform master keys for security
-- **Instance-Based State**: Multiple ad slots can operate independently without state conflicts
+**Option 1: Auto-Initialize (Easiest)**
 
-### Security & Reliability
-- **Key Obfuscation**: Platform keys stored as Base64 to prevent plain-text searching
-  - *Note: Base64 key encoding is used for code obfuscation and clean delivery, not cryptographic key concealment.*
-- **Environment-Aware Routing**: Unity Ads for mobile/tablet, A-Ads for desktop
-- **Failure Handling**: Comprehensive error handling with automatic fallback
-- **Retry Logic**: Configurable maximum retry attempts (default: 2)
-- **Clean DOM Management**: Prevents conflicts between different ad providers
-- **Sandboxed Iframes**: Custom HTML rendered in isolated sandboxed iframes (without allow-same-origin)
-- **Script Deduplication**: State-based script loading with callback queuing
-- **Request Timeouts**: Configurable timeout safeguards for external requests
-- **Consent Metadata Storage & Forwarding**: GDPR and US Privacy consent string injection with HTML escaping
-- **Request Isolation**: Session-based stale-callback protection prevents race conditions
-- **Unique Container IDs**: Dynamic ID generation prevents multi-slot conflicts
-- **Session Tracking**: RequestSession objects track attempt history and completion state
-
-## 📦 Installation
-
-Include the minified SDK in your HTML via jsDelivr CDN:
+Just add this single line to your website's HTML:
 
 ```html
+<div id="my-ad-slot" style="width: 300px; height: 250px;"></div>
+
+<script 
+  src="https://cdn.jsdelivr.net/gh/Kinn156/ad-wrapper-sdk@v2.2.8/dist/ad-wrapper.min.js"
+  data-container-id="my-ad-slot"
+  data-provider="google"
+  data-adsense-client="ca-pub-1234567890123456"
+  data-adsense-slot="/1234567890/your-ad-slot">
+</script>
+```
+
+That's it! The ad will automatically load when the page loads.
+
+**Option 2: Manual Initialize**
+
+Add the SDK script and empty div:
+
+```html
+<div id="my-ad-slot" style="width: 300px; height: 250px;"></div>
 <script src="https://cdn.jsdelivr.net/gh/Kinn156/ad-wrapper-sdk@v2.2.8/dist/ad-wrapper.min.js"></script>
 ```
 
-### ES5 Constructor Pattern (v2.2.8)
+Then add this small script:
 
-For multiple ad slots, create isolated instances:
-
-```javascript
-const adSlot1 = new AdWrapper();
-adSlot1.init({ containerId: 'ad-slot-1', developerConfig: {...} });
-
-const adSlot2 = new AdWrapper();
-adSlot2.init({ containerId: 'ad-slot-2', developerConfig: {...} });
-```
-
-### Singleton Compatibility (Backwards Compatible)
-
-For single ad slot usage, the singleton pattern still works:
-
-```javascript
-AdWrapperSingleton.init({ containerId: 'ad-slot-1', developerConfig: {...} });
-```
-
-## 🔧 Configuration
-
-### Basic Setup
-
-```javascript
-const adWrapper = new AdWrapper();
-adWrapper.init({
-  containerId: "ad-slot-1",
-  developerConfig: {
-    provider: "gpt", // or "google" (alias), "unity", "applovin", "a-ads", "custom_tag"
-    keys: {
-      googleAdSlot: "/12345/developer_banner"
+```html
+<script>
+  const adWrapper = new AdWrapper();
+  adWrapper.init({
+    containerId: "my-ad-slot",
+    developerConfig: {
+      provider: "google",
+      keys: {
+        googleAdSlot: "/12345/your-ad-slot"
+      }
     }
-  }
-});
-adWrapper.loadAd();
+  });
+  adWrapper.loadAd();
+</script>
 ```
-
-### Advanced Configuration with Fallback
-
-```javascript
-const adWrapper = new AdWrapper();
-adWrapper.init({
-  containerId: "ad-slot-1",
-  developerConfig: {
-    provider: "gpt",
-    keys: {
-      googleAdSlot: "/12345/developer_banner"
-    },
-    fallbackProvider: "custom_tag",
-    fallbackKeys: {
-      customHtml: '<div>Fallback Ad</div>'
-    }
-  },
-  timeout: 5000, // Request timeout in milliseconds
-  consent: {
-    gdprApplies: true,
-    tcString: "CPxxxx...",
-    uspString: "1YNN"
-  }
-});
-adWrapper.loadAd();
-```
-
-### Loading Ads
-
-```javascript
-// Load a single ad
-adWrapper.loadAd();
-```
-
-## 🎯 Platform Takeover Configuration
-
-The SDK automatically routes 10% of ad requests to platform ads using obfuscated keys:
-
-- **Mobile/Tablet**: Unity Ads (Game ID: `800110972`)
-- **Desktop**: A-Ads (Zone ID: `2450233`)
-
-Platform keys are Base64-encoded in the source code:
-- Unity ID: `ODAwMTEwOTcy` → `800110972`
-- A-Ads Zone: `MjQ1MDIzMw==` → `2450233`
-
-## 📱 Environment Detection
-
-The SDK automatically detects the user's environment:
-
-- **Mobile**: iPhones, Android phones, etc.
-- **Tablet**: iPads, Android tablets
-- **Desktop**: Desktop browsers
-
-Platform provider selection:
-- Mobile/Tablet → Unity Ads
-- Desktop → A-Ads
-
-## 🔄 Fallback Mechanism
-
-The SDK implements a robust fallback system:
-
-1. **Platform Ad Failure**: Falls back to developer configuration
-2. **Developer Ad Failure**: Uses configured fallback provider
-3. **No Fallback Config**: Falls back to platform ads
-4. **Max Attempts Reached**: Shows fallback placeholder
-
-### Configuring Fallback
-
-```javascript
-developerConfig: {
-  provider: "google",
-  keys: { googleAdSlot: "/12345/developer_banner" },
-  fallbackProvider: "unity", // or "a-ads", "custom_tag"
-  fallbackKeys: {
-    unityGameId: "FALLBACK_UNITY_ID"
-  }
-}
-```
-
-## 🛠️ API Reference
-
-### Configuration Methods
-
-- `AdWrapper.init(config)` - Initialize the SDK
-- `AdWrapper.loadAd()` - Load an ad request
-
-### Environment Methods
-
-- `AdWrapper.getEnvironment()` - Get detected environment (mobile/tablet/desktop)
-
-### Configuration Methods
-
-- `AdWrapper.getTakeoverRate()` - Get current takeover rate (default: 0.10)
-- `AdWrapper.setTakeoverRate(rate)` - Set takeover rate (0.0 to 1.0)
-- `AdWrapper.isFallbackEnabled()` - Check if fallback is enabled
-- `AdWrapper.setFallbackEnabled(enabled)` - Enable/disable fallback
-- `AdWrapper.getMaxRetryAttempts()` - Get max retry attempts
-- `AdWrapper.setMaxRetryAttempts(attempts)` - Set max retry attempts (0-5)
-
-## 🧪 Testing
-
-### Automated Tests
-
-Run the comprehensive test suite:
-
-```bash
-node test-environment-fallback.js
-```
-
-This tests:
-- Base64 decoding verification
-- Environment detection accuracy
-- Platform provider selection
-- Fallback logic scenarios
-- Key obfuscation
-- Takeover rate statistics
-
-### Manual Testing
-
-Open `index.html` in a browser to access the interactive test harness:
-
-- **Load Single Ad**: Test individual ad requests
-- **Run 100 Tests**: Automated batch testing with statistics
-- **Test Fallback**: Simulate failure scenarios
-- **Environment Display**: Shows detected environment
-- **Live Statistics**: Real-time takeover/fallback tracking
-
-## 📊 Supported Providers
-
-### Google Publisher Tag (GPT)
-```javascript
-provider: "gpt", // or "google" for backwards compatibility
-keys: {
-  googleAdSlot: "/12345/developer_banner"
-}
-```
-
-### Unity Ads
-```javascript
-provider: "unity",
-keys: {
-  unityGameId: "YOUR_UNITY_GAME_ID"
-}
-```
-
-### AppLovin
-```javascript
-provider: "applovin",
-keys: {
-  applovinZoneId: "YOUR_APPLOVIN_ZONE"
-}
-```
-
-### A-Ads
-```javascript
-provider: "a-ads",
-keys: {
-  aAdsZoneId: "YOUR_AADS_ZONE"
-}
-```
-
-### Custom HTML
-```javascript
-provider: "custom_tag",
-keys: {
-  customHtml: "<div>Your custom ad HTML</div>"
-}
-```
-
-## 🔐 Security Features
-
-1. **Obfuscated Keys**: Platform master keys are Base64-encoded
-2. **Key Masking**: Keys are partially obfuscated in console logs
-3. **No External Dependencies**: Zero-dependency reduces attack surface
-4. **DOM Isolation**: Ads loaded in isolated containers
-5. **Sandboxed Iframes**: Custom HTML rendered in sandboxed iframes with restricted permissions
-6. **Script Deduplication**: Global registry prevents duplicate SDK injections
-7. **Request Timeouts**: Automatic fallback on slow or hung requests
-8. **Consent Management**: GDPR and US Privacy string injection for compliance
-
-## 📈 Statistics & Monitoring
-
-The SDK provides detailed console logging:
-
-- `[AdWrapper] PLATFORM TAKEOVER` - Platform ad routing
-- `[AdWrapper] DEVELOPER SHARE` - Developer ad routing
-- `[AdWrapper] Fallback attempt` - Fallback activation
-- `[AdWrapper] Environment detected` - Environment detection
-
-## 🚀 Building
-
-Build the production bundle:
-
-```bash
-npm install
-npm run build
-```
-
-Development build with source maps:
-
-```bash
-npm run dev
-```
-
-Run E2E tests:
-
-```bash
-npm run test:e2e
-```
-
-## 📝 File Structure
-
-```
-ADS AGGREGATOR/
-├── src/
-│   └── ad-wrapper.js          # Source code
-├── dist/
-│   └── ad-wrapper.min.js      # Production bundle
-├── index.html                 # Test harness
-├── test-environment-fallback.js  # Automated tests
-├── test-routing.js            # Routing logic tests
-├── package.json               # NPM configuration
-└── README.md                  # Documentation
-```
-
-## ⚙️ Configuration Options
-
-### Takeover Rate
-Default: 10% (0.10)
-```javascript
-adWrapper.setTakeoverRate(0.15); // Set to 15%
-```
-
-### Fallback Enabled
-Default: true
-```javascript
-adWrapper.setFallbackEnabled(false); // Disable fallback
-```
-
-### Max Retry Attempts
-Default: 2
-```javascript
-adWrapper.setMaxRetryAttempts(3); // Set to 3 attempts
-```
-
-### Request Timeout
-Default: 5000ms
-```javascript
-adWrapper.setTimeout(10000); // Set to 10 seconds
-```
-
-### Consent Management
-```javascript
-adWrapper.setConsent({
-  gdprApplies: true,
-  tcString: "CPxxxx...",
-  uspString: "1YNN"
-});
-```
-
-## 🌐 Browser Compatibility
-
-- Chrome/Edge: ✅ Full support
-- Firefox: ✅ Full support
-- Safari: ✅ Full support
-- Mobile browsers: ✅ Full support
-
-## 📄 License
-
-MIT License - Feel free to use in your projects
-
-## 🤝 Support
-
-For issues or questions, please refer to the test harness and automated tests for usage examples.
 
 ---
 
-**Version**: 2.2.8  
-**Status**: Complete Edge-Case Hardening & Cleanup ✅  
-**Last Updated**: 2026-08-10  
+## 🔑 How to Add Your Network IDs
 
-## v2.2.8 Changes
-- **GPT listener teardown**: Added centralized `cleanupSession()` method and attached `renderHandler` to `session.gptRenderHandler` for proper cleanup on timeout/destroy
-- **DOM script cleanup**: Added script tag removal from DOM on timeout and error in `loadScript()` to prevent memory leaks
-- **State cleanup**: Removed redundant `this.lastProvider` state; all fallback routing now uses `session.history` and `session.attemptedProviders` exclusively
-- **Demo dashboard fix**: Fixed double-counting in index.html console parser to only process structured `[AdWrapper Event]` messages
-- **Memory leak prevention**: Comprehensive cleanup of GPT listeners, script tags, and session state
-- **Edge-case hardening**: Robust handling of timeout, destroy, and concurrent request scenarios
+Replace the placeholder IDs with your actual network IDs:
 
-## v2.2.7 Changes
-- **House ad sandbox security**: Removed `allow-scripts` and `allow-same-origin` from house ad iframe sandbox, using only `allow-popups allow-forms` for static image ads
-- **Script loader robustness**: Added `settled` flag to `loadScript()` to prevent multiple completion events (onload, onerror, timeout) from executing
-- **Console listener fixes**: Fixed variable name typos in index.html console parser (msg → message) and regex corrections
-- **Enhanced security posture**: House ads now render with minimal permissions, reducing XSS risk
-- **Race condition prevention**: Script loading now properly handles edge cases where multiple terminal events fire simultaneously
+### Google AdSense (Auto-Initialize)
+```html
+<script 
+  data-container-id="my-ad-slot"
+  data-provider="google"
+  data-adsense-client="ca-pub-1234567890123456"
+  data-adsense-slot="/1234567890/your-ad-slot"
+  src="https://cdn.jsdelivr.net/gh/Kinn156/ad-wrapper-sdk@v2.2.8/dist/ad-wrapper.min.js">
+</script>
+```
 
-## v2.2.6 Changes
-- **GPT listener cleanup**: Added named function reference for slotRenderEnded with removeEventListener to prevent listener stacking
-- **Strict fallback exclusion**: Implemented session.attemptedProviders tracking to prevent retrying already-failed networks in same request
-- **Emergency house ad**: Added fail-safe mechanism with emergencyHouseAd configuration for when all providers are exhausted
-- **Failure callback support**: Added onAdFailedToLoad callback in developerConfig for handling complete ad load failures
-- **Enhanced waterfall logic**: Improved fallback hierarchy with provider exclusion to avoid redundant requests
-- **Production hardening**: Critical reliability improvements for memory leak prevention and resource optimization
+### Unity Ads (Auto-Initialize)
+```html
+<script 
+  data-container-id="my-ad-slot"
+  data-provider="unity"
+  data-unity-game-id="YOUR_UNITY_GAME_ID"
+  data-unity-placement="YOUR_PLACEMENT_ID"
+  src="https://cdn.jsdelivr.net/gh/Kinn156/ad-wrapper-sdk@v2.2.8/dist/ad-wrapper.min.js">
+</script>
+```
 
-## v2.2.5 Changes
-- **Data URL custom tag loader**: Fixed cross-origin iframe issues by using data URL instead of contentDocument access
-- **Added destroy() method**: Implemented cleanup method for proper session, timer, DOM, and GPT slot cleanup
-- **Full E2E test suite pass**: All 21 tests now passing including sandboxed iframe security and destroy method tests
-- **TypeError fix**: Removed residual pendingTimeouts references causing runtime errors
-- **Session timer cleanup**: All timer cleanup now uses direct session.timeoutHandle checks
-- **Demo parser update**: Updated console parser to match new [AdWrapper Event] format
-- **Code consistency**: Session-owned timer pattern applied consistently across all cleanup paths
+### AppLovin (Auto-Initialize)
+```html
+<script 
+  data-container-id="my-ad-slot"
+  data-provider="applovin"
+  data-applovin-sdk-key="YOUR_APPLOVIN_ZONE_ID"
+  src="https://cdn.jsdelivr.net/gh/Kinn156/ad-wrapper-sdk@v2.2.8/dist/ad-wrapper.min.js">
+</script>
+```
 
-## v2.2.4 Changes
-- **GPT render confirmation**: Added slotRenderEnded event listener to detect empty GPT slots
-- **GPT slot lifecycle**: Destroy existing GPT slots before creating new ones to prevent conflicts
-- **Session-owned timers**: Refactored all timeouts to be strictly session-owned via session.timeoutHandle
-- **Timer isolation**: Removed global pendingTimeouts array, fallback now only affects specific session
-- **Structured events**: Added [AdWrapper Event] logs for demo UI statistics parsing
-- **Demo stats update**: Console parser now listens for structured events to update platform/developer stats
+---
 
-## v2.2.3 Changes
-- **Emergency ReferenceError fix**: Replaced undefined MAX_RETRY_ATTEMPTS references with instance property
-- **Double-escaping fix**: Removed unnecessary escapeHtml() calls on textContent assignments
-- **Session isolation**: Provider tracking now uses session.history instead of global instance state
-- **Init cleanup**: Added session cleanup and consent reset on re-initialization
-- **Version sync**: Synchronized version metadata across all repository files
+## 📋 Ready-to-Copy Examples
 
-## v2.2.2 Changes
-- **Instance-scoped configuration**: takeoverRate, fallbackEnabled, maxRetryAttempts moved to instance properties
-- **destroy() API**: New method for proper cleanup of sessions, timers, DOM elements, and GPT slots
-- **Auto-cancellation**: Incomplete sessions automatically cancelled when starting new requests
-- **Centralized script loading**: All providers use unified loadScript() with 10-second timeout
-- **Security hardening**: Sanitized error HTML using textContent instead of innerHTML
-- **Demo page fix**: Proper SDK instantiation with new AdWrapper() pattern
+### Basic Single Network Setup (Auto-Initialize)
 
-## v2.2.1 Changes
-- **Fallback routing fix**: Intelligent hierarchy (Platform → Developer → FallbackProvider → Platform)
-- **Fallback placeholder**: Renders styled placeholder when max retries reached
-- **Timer cleanup**: Proper timeout cleanup on success and failure to prevent memory leaks
-- **Promise-based script loader**: Centralized loadScript() method with state tracking
-- **E2E test fixes**: Fixed synchronous provider assertion and added uncaught error handlers
+```html
+<!DOCTYPE html>
+<html>
+<head>
+  <title>My Website</title>
+</head>
+<body>
+  <h1>Welcome to My Site</h1>
+  
+  <!-- Ad Container -->
+  <div id="my-ad" style="width: 300px; height: 250px;"></div>
+  
+  <!-- Auto-Initialize SDK with Google AdSense -->
+  <script 
+    data-container-id="my-ad"
+    data-provider="google"
+    data-adsense-client="ca-pub-1234567890123456"
+    data-adsense-slot="/1234567890/your-ad-slot"
+    src="https://cdn.jsdelivr.net/gh/Kinn156/ad-wrapper-sdk@v2.2.8/dist/ad-wrapper.min.js">
+  </script>
+</body>
+</html>
+```
 
-## v2.2.0 Changes
-- **RequestSession objects**: Isolated session tracking with attempt history and completion state
-- **Session-based callbacks**: All async handlers use session objects instead of integer IDs
-- **Enhanced fallback tracking**: Session history tracks all provider attempts and fallbacks
-- **Improved timeout management**: Session-scoped timeout handles for better cleanup
+### Multi-Network Setup (Auto-Initialize with Fallback)
 
-## v2.1.0 Changes
-- **Unique container IDs**: Dynamic ID generation per instance prevents multi-slot conflicts
-- **Request isolation**: Stale-callback protection prevents race conditions from rapid loadAd() calls
-- **Script state registry**: State-based script loading ('loading', 'loaded', 'error') with callback queuing
-- **Consent escaping**: HTML special character escaping for consent metadata
-- **Consent metadata refinement**: Labeled as metadata storage & forwarding (not standalone CMP)
+```html
+<!DOCTYPE html>
+<html>
+<head>
+  <title>My Website</title>
+</head>
+<body>
+  <h1>Welcome to My Site</h1>
+  
+  <!-- Ad Container -->
+  <div id="main-ad" style="width: 300px; height: 250px;"></div>
+  
+  <!-- Auto-Initialize with Fallback (Google → Unity) -->
+  <script 
+    data-container-id="main-ad"
+    data-provider="google"
+    data-adsense-client="ca-pub-1234567890123456"
+    data-adsense-slot="/1234567890/your-ad-slot"
+    data-fallback-provider="unity"
+    data-fallback-unity-game-id="YOUR_UNITY_GAME_ID"
+    src="https://cdn.jsdelivr.net/gh/Kinn156/ad-wrapper-sdk@v2.2.8/dist/ad-wrapper.min.js">
+  </script>
+</body>
+</html>
+```
 
-## v2.0.0 Changes
-- **Instance-based state**: Multiple ad slots can operate independently
-- **Script deduplication**: Prevents duplicate SDK script injections
-- **Request timeouts**: Configurable timeout safeguards (default: 5000ms)
-- **Sandboxed iframes**: Custom HTML rendered in isolated sandboxed iframes
-- **Consent management**: GDPR and US Privacy string support
-- **GPT provider**: Renamed "google" to "gpt" with backwards compatibility alias
-- **E2E testing**: Puppeteer-based headless browser test suite
+---
+
+## 📊 Configuration Reference
+
+### Data Attributes (Auto-Initialize)
+
+| Attribute | What It Does | Required | Example |
+|-----------|--------------|----------|---------|
+| `data-container-id` | ID of the div where ad appears | ✅ Yes | `"my-ad"` |
+| `data-provider` | Which ad network to use | ✅ Yes | `"google"`, `"unity"`, `"applovin"` |
+| `data-adsense-client` | Your Google AdSense publisher ID | For Google | `"ca-pub-1234567890"` |
+| `data-adsense-slot` | Your Google AdSense slot ID | For Google | `"/12345/your-slot"` |
+| `data-unity-game-id` | Your Unity Ads Game ID | For Unity | `"1234567"` |
+| `data-unity-placement` | Your Unity Placement ID (optional) | For Unity | `"Banner"` |
+| `data-applovin-sdk-key` | Your AppLovin Zone ID | For AppLovin | `"abc123xyz"` |
+| `data-fallback-provider` | Backup network if main fails | Optional | `"unity"` |
+| `data-fallback-unity-game-id` | Unity Game ID for fallback | Optional | `"1234567"` |
+| `data-fallback-adsense-slot` | Google slot ID for fallback | Optional | `"/12345/your-slot"` |
+| `data-fallback-applovin-zone` | AppLovin zone ID for fallback | Optional | `"abc123xyz"` |
+| `data-timeout` | Request timeout in milliseconds | Optional | `"5000"` |
+| `data-disable-fallback` | Disable fallback if set to "true" | Optional | `"true"` |
+
+---
+
+## 🛠️ Troubleshooting Tips
+
+### 1. Check Browser Console
+- Right-click on your webpage and select "Inspect"
+- Go to the "Console" tab
+- Look for any red error messages
+- Common issues: Invalid network IDs, missing container div
+
+### 2. Validate Your ID Formats
+- **Google AdSense**: Should look like `ca-pub-1234567890123456` (client) and `/1234567890/your-slot-name` (slot)
+- **Unity Ads**: Should be a number like `1234567`
+- **AppLovin**: Should be your zone ID string from AppLovin dashboard
+
+### 3. Test Mode
+- Start with just one network to make sure it works
+- Once basic setup works, add fallback networks
+- Make sure your container div has a defined width and height
+- Check that `data-container-id` matches your div ID exactly
+
+---
+
+## 💡 How It Works
+
+1. **Auto-Initialize**: The SDK automatically starts when the page loads (if using data attributes)
+2. **Main Network**: The SDK tries to load an ad from your primary network
+3. **Automatic Fallback**: If the primary network fails, it automatically tries your backup network
+4. **Smart Detection**: The SDK automatically detects if the user is on mobile or desktop
+5. **Clean Display**: Ads are displayed in secure containers that protect your site
+
+---
+
+## 🆘 Need Help?
+
+- Check your browser console for error messages
+- Make sure your network IDs are correct
+- Ensure your ad container div has the right ID
+- Verify your website allows third-party scripts
+- Try the manual initialization method if auto-initialize doesn't work
+
+---
+
+**Version**: 2.2.9  
+**Last Updated**: 2026-08-16  
+**New**: Auto-initialization with data attributes support
